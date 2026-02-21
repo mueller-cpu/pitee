@@ -29,7 +29,7 @@ export function getPALFaktor(trainingstagePW: number): number {
   return 1.8;
 }
 
-// Kalorienbedarf
+// Kalorienbedarf (angepasst für Männer 50+: -10% wegen reduziertem Stoffwechsel)
 export function berechneKalorien(
   gewichtKg: number,
   groesseCm: number,
@@ -39,15 +39,16 @@ export function berechneKalorien(
 ): number {
   const bmr = berechneBMR(gewichtKg, groesseCm, alter);
   const pal = getPALFaktor(trainingstagePW);
-  const tdee = Math.round(bmr * pal);
+  // 10% Reduktion für Männer 50+ (reduzierter Stoffwechsel)
+  const tdee = Math.round(bmr * pal * 0.9);
 
   switch (ziel) {
     case "muskelaufbau":
-      return tdee + 300; // Leichter Überschuss
+      return tdee + 250; // Leichter Überschuss (reduziert für 50+)
     case "fettabbau":
-      return tdee - 400; // Moderates Defizit
+      return tdee - 350; // Moderates Defizit (angepasst für 50+)
     case "kraft":
-      return tdee + 200;
+      return tdee + 150; // Moderater Überschuss (angepasst für 50+)
     default: // gesundheit
       return tdee;
   }
