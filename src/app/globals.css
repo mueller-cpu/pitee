@@ -52,81 +52,82 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  /* Apple-like Light Theme – hoher Kontrast, warme Neutraltöne */
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.12 0 0);
+  --radius: 0.5rem;
+  /* McFit Design – Energetisch, Sportlich, Gelb-Magenta-Schwarz */
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.15 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.12 0 0);
+  --card-foreground: oklch(0.15 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.12 0 0);
-  --primary: oklch(0.45 0.18 250);        /* Kräftiges Blau */
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.005 250);     /* Zartes Blau-Grau */
-  --secondary-foreground: oklch(0.25 0 0);
-  --muted: oklch(0.955 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.92 0.25 102);        /* McFit Gelb #FFFF00 */
+  --primary-foreground: oklch(0.15 0 0);  /* Schwarz auf Gelb */
+  --secondary: oklch(0.2 0 0);            /* Dunkelgrau/Schwarz */
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.94 0 0);
   --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.96 0.005 250);
-  --accent-foreground: oklch(0.25 0 0);
+  --accent: oklch(0.65 0.28 340);         /* Magenta/Pink */
+  --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.55 0.22 25);
-  --border: oklch(0.91 0 0);
-  --input: oklch(0.91 0 0);
-  --ring: oklch(0.45 0.18 250);
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.88 0 0);
+  --ring: oklch(0.92 0.25 102);          /* Gelb Ring */
   --success: oklch(0.55 0.18 145);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.75 0.15 75);
   --warning-foreground: oklch(0.2 0 0);
-  --chart-1: oklch(0.45 0.18 250);
-  --chart-2: oklch(0.55 0.18 145);
-  --chart-3: oklch(0.75 0.15 75);
+  --chart-1: oklch(0.92 0.25 102);       /* Gelb */
+  --chart-2: oklch(0.65 0.28 340);       /* Magenta */
+  --chart-3: oklch(0.2 0 0);             /* Schwarz */
   --chart-4: oklch(0.55 0.22 25);
-  --chart-5: oklch(0.55 0.15 310);
+  --chart-5: oklch(0.55 0.18 145);
   --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.12 0 0);
-  --sidebar-primary: oklch(0.45 0.18 250);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.005 250);
-  --sidebar-accent-foreground: oklch(0.25 0 0);
-  --sidebar-border: oklch(0.91 0 0);
-  --sidebar-ring: oklch(0.45 0.18 250);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.92 0.25 102);
+  --sidebar-primary-foreground: oklch(0.15 0 0);
+  --sidebar-accent: oklch(0.65 0.28 340);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.88 0 0);
+  --sidebar-ring: oklch(0.92 0.25 102);
 }
 
 .dark {
-  --background: oklch(0.13 0 0);
+  /* McFit Dark Mode – Schwarz mit Gelb/Magenta Akzenten */
+  --background: oklch(0.12 0 0);
   --foreground: oklch(0.95 0 0);
-  --card: oklch(0.18 0 0);
+  --card: oklch(0.16 0 0);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.18 0 0);
+  --popover: oklch(0.16 0 0);
   --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.6 0.18 250);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.22 0.01 250);
+  --primary: oklch(0.92 0.25 102);       /* McFit Gelb */
+  --primary-foreground: oklch(0.12 0 0); /* Schwarz auf Gelb */
+  --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.22 0 0);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.22 0.01 250);
-  --accent-foreground: oklch(0.95 0 0);
+  --accent: oklch(0.65 0.28 340);        /* Magenta */
+  --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.65 0.2 22);
   --border: oklch(0.25 0 0);
   --input: oklch(0.25 0 0);
-  --ring: oklch(0.6 0.18 250);
+  --ring: oklch(0.92 0.25 102);
   --success: oklch(0.6 0.18 145);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.8 0.15 75);
   --warning-foreground: oklch(0.15 0 0);
-  --chart-1: oklch(0.6 0.18 250);
-  --chart-2: oklch(0.6 0.18 145);
-  --chart-3: oklch(0.8 0.15 75);
+  --chart-1: oklch(0.92 0.25 102);       /* Gelb */
+  --chart-2: oklch(0.65 0.28 340);       /* Magenta */
+  --chart-3: oklch(0.4 0 0);             /* Grau */
   --chart-4: oklch(0.65 0.2 22);
-  --chart-5: oklch(0.6 0.15 310);
-  --sidebar: oklch(0.16 0 0);
+  --chart-5: oklch(0.6 0.18 145);
+  --sidebar: oklch(0.14 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.6 0.18 250);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.22 0.01 250);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.92 0.25 102);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.65 0.28 340);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.6 0.18 250);
+  --sidebar-ring: oklch(0.92 0.25 102);
 }
 
 @layer base {

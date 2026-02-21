@@ -7,7 +7,7 @@ import {
   Dumbbell,
   UtensilsCrossed,
   TrendingUp,
-  MessageCircle,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ const tabs = [
   { label: "Training", icon: Dumbbell, path: "/training" },
   { label: "Ernährung", icon: UtensilsCrossed, path: "/ernaehrung" },
   { label: "Fortschritt", icon: TrendingUp, path: "/fortschritt" },
-  { label: "Coach", icon: MessageCircle, path: "/coach" },
+  { label: "Profil", icon: User, path: "/profil" },
 ] as const;
 
 export default function BottomNav() {
