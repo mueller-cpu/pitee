@@ -15,7 +15,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "pitee – Dein KI-Fitness-Coach",
   description:
-    "Evidenzbasiertes Krafttraining und personalisierte Ernährung für Männer ab 50.",
+    "Evidenzbasiertes Krafttraining und personalisierte Ernährung für Menschen ab 50.",
 };
 
 export const viewport: Viewport = {

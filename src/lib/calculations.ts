@@ -15,9 +15,18 @@ export function berechneBMI(gewichtKg: number, groesseCm: number): number {
   return Math.round((gewichtKg / (groesseM * groesseM)) * 10) / 10;
 }
 
-// Mifflin-St Jeor (Männer): BMR = 10 × Gewicht + 6.25 × Größe − 5 × Alter − 5 (nur Männer, angepasst für 50+)
-export function berechneBMR(gewichtKg: number, groesseCm: number, alter: number): number {
-  return Math.round(10 * gewichtKg + 6.25 * groesseCm - 5 * alter + 5);
+// Mifflin-St Jeor: BMR-Berechnung geschlechtsspezifisch
+// Männer: BMR = 10 × Gewicht + 6.25 × Größe − 5 × Alter + 5
+// Frauen: BMR = 10 × Gewicht + 6.25 × Größe − 5 × Alter − 161
+export function berechneBMR(
+  gewichtKg: number,
+  groesseCm: number,
+  alter: number,
+  geschlecht: string = "maennlich"
+): number {
+  const baseBMR = 10 * gewichtKg + 6.25 * groesseCm - 5 * alter;
+  const geschlechtsFaktor = geschlecht === "weiblich" ? -161 : 5;
+  return Math.round(baseBMR + geschlechtsFaktor);
 }
 
 // PAL-Faktoren
@@ -29,26 +38,32 @@ export function getPALFaktor(trainingstagePW: number): number {
   return 1.8;
 }
 
-// Kalorienbedarf (angepasst für Männer 50+: -10% wegen reduziertem Stoffwechsel)
+// Kalorienbedarf (angepasst für 50+: geschlechtsspezifische Stoffwechsel-Reduktion)
+// Männer 50+: -10% (Testosteron-Rückgang)
+// Frauen 50+: -17% (Menopause, Östrogen-Abfall - stärker!)
 export function berechneKalorien(
   gewichtKg: number,
   groesseCm: number,
   alter: number,
   trainingstagePW: number,
-  ziel: string
+  ziel: string,
+  geschlecht: string = "maennlich"
 ): number {
-  const bmr = berechneBMR(gewichtKg, groesseCm, alter);
+  const bmr = berechneBMR(gewichtKg, groesseCm, alter, geschlecht);
   const pal = getPALFaktor(trainingstagePW);
-  // 10% Reduktion für Männer 50+ (reduzierter Stoffwechsel)
-  const tdee = Math.round(bmr * pal * 0.9);
 
+  // Geschlechtsspezifische Stoffwechsel-Reduktion für 50+
+  const stoffwechselFaktor = geschlecht === "weiblich" ? 0.83 : 0.9;
+  const tdee = Math.round(bmr * pal * stoffwechselFaktor);
+
+  // Angepasste Überschüsse/Defizite für 50+ (vorsichtiger)
   switch (ziel) {
     case "muskelaufbau":
-      return tdee + 250; // Leichter Überschuss (reduziert für 50+)
+      return tdee + (geschlecht === "weiblich" ? 200 : 250);
     case "fettabbau":
-      return tdee - 350; // Moderates Defizit (angepasst für 50+)
+      return tdee - (geschlecht === "weiblich" ? 300 : 350);
     case "kraft":
-      return tdee + 150; // Moderater Überschuss (angepasst für 50+)
+      return tdee + (geschlecht === "weiblich" ? 100 : 150);
     default: // gesundheit
       return tdee;
   }
@@ -88,22 +103,30 @@ export function berechneMakros(
   return { proteinG, kohlenhydrateG, fettG };
 }
 
-// Fitnesslevel basierend auf 1RM und Körpergewicht
+// Fitnesslevel basierend auf 1RM und Körpergewicht (geschlechtsspezifisch)
 export function bestimmeFitnessLevel(
   geschaetztes1RM: number,
   koerpergewicht: number,
-  uebung: string
+  uebung: string,
+  geschlecht: string = "maennlich"
 ): string {
   const verhaeltnis = geschaetztes1RM / koerpergewicht;
 
-  // Schwellenwerte für Männer 50+ (angepasst)
-  const schwellenwerte: Record<string, [number, number, number]> = {
-    bankdruecken: [0.5, 0.75, 1.0],    // einsteiger < 0.5, grundlagen 0.5-0.75, mittel 0.75-1.0, fortgeschritten > 1.0
+  // Schwellenwerte für 50+ (angepasst, geschlechtsspezifisch)
+  const schwellenwerteM: Record<string, [number, number, number]> = {
+    bankdruecken: [0.5, 0.75, 1.0],
     kniebeuge: [0.6, 0.9, 1.25],
     rudern: [0.4, 0.65, 0.85],
   };
 
-  const schwellen = schwellenwerte[uebung] || [0.4, 0.65, 0.85];
+  const schwellenwerteW: Record<string, [number, number, number]> = {
+    bankdruecken: [0.3, 0.5, 0.7],     // Frauen ~60% der Männer-Werte
+    kniebeuge: [0.4, 0.6, 0.9],
+    rudern: [0.25, 0.4, 0.6],
+  };
+
+  const schwellenwerte = geschlecht === "weiblich" ? schwellenwerteW : schwellenwerteM;
+  const schwellen = schwellenwerte[uebung] || (geschlecht === "weiblich" ? [0.25, 0.4, 0.6] : [0.4, 0.65, 0.85]);
 
   if (verhaeltnis < schwellen[0]) return "einsteiger";
   if (verhaeltnis < schwellen[1]) return "grundlagen";
