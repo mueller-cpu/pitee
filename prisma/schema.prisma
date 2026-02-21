@@ -25,10 +25,11 @@ model User {
   workoutLogs    WorkoutLog[]
   nutritionPlans NutritionPlan[]
   nutritionLogs  NutritionLog[]
-  bodyMetrics    BodyMetric[]
-  wellnessLogs   WellnessLog[]
-  conversations  AIConversation[]
-  settings       UserSettings?
+  bodyMetrics        BodyMetric[]
+  wellnessLogs       WellnessLog[]
+  conversations      AIConversation[]
+  settings           UserSettings?
+  wearableConnection WearableConnection?
 }
 
 model UserProfile {
@@ -290,9 +291,17 @@ model WellnessLog {
   muskelkater     Int?
   stimmung        Int?
   notiz           String?
+  // WHOOP-spezifische Felder
+  whoopRecovery   Float?   // Recovery Score 0-100%
+  whoopStrain     Float?   // Strain Score 0-21
+  whoopHRV        Float?   // HRV (ms)
+  whoopRestingHR  Int?     // Resting Heart Rate
+  whoopSyncedAt   DateTime? // Wann wurde von WHOOP synchronisiert
   createdAt       DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, datum])
 }
 
 // ─── KI-Chat ─────────────────────────────────────────────────
@@ -326,6 +335,24 @@ model UserSettings {
   darkMode           Boolean @default(false)
   einheiten          String  @default("metrisch")
   benachrichtigungen Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Wearable-Integration ────────────────────────────────────
+
+model WearableConnection {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  provider     String    // "whoop", "oura", "garmin", etc.
+  accessToken  String    // OAuth Access Token
+  refreshToken String?   // OAuth Refresh Token
+  expiresAt    DateTime? // Token Ablaufzeit
+  whoopUserId  String?   // WHOOP User ID
+  lastSync     DateTime? // Letzte erfolgreiche Synchronisation
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

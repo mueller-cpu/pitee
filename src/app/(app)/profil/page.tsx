@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Scale, Ruler, LogOut, Dumbbell, Save, Sun, Moon } from "lucide-react";
+import { User, Scale, Ruler, LogOut, Dumbbell, Save, Sun, Moon, Watch, RefreshCw, Unlink } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -99,6 +99,9 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [whoopConnected, setWhoopConnected] = useState(false);
+  const [whoopSyncing, setWhoopSyncing] = useState(false);
+  const [whoopConnecting, setWhoopConnecting] = useState(false);
   const { theme, setTheme } = useTheme();
 
   const [koerperForm, setKoerperForm] = useState<KoerperForm>({
@@ -131,6 +134,31 @@ export default function ProfilPage() {
       })
       .catch((err) => console.error("Profile fetch error:", err))
       .finally(() => setLoading(false));
+
+    // Check WHOOP connection status
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then(() => {
+        // Check if WHOOP is connected (we'll create this endpoint)
+        return fetch("/api/whoop/status");
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        setWhoopConnected(data.connected || false);
+      })
+      .catch((err) => console.error("WHOOP status error:", err));
+
+    // Check URL params for WHOOP callback
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("whoop_connected") === "true") {
+      toast.success("WHOOP erfolgreich verbunden!");
+      setWhoopConnected(true);
+      // Clean up URL
+      window.history.replaceState({}, "", "/profil");
+    } else if (params.get("whoop_error")) {
+      toast.error("WHOOP-Verbindung fehlgeschlagen");
+      window.history.replaceState({}, "", "/profil");
+    }
   }, [router]);
 
   const handleSaveKoerperdaten = async () => {
@@ -176,6 +204,52 @@ export default function ProfilPage() {
       toast.error("Fehler beim Speichern der Koerperdaten.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleConnectWhoop = async () => {
+    setWhoopConnecting(true);
+    try {
+      const res = await fetch("/api/whoop/auth");
+      const data = await res.json();
+
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error("No auth URL");
+      }
+    } catch {
+      toast.error("Fehler beim Verbinden mit WHOOP");
+      setWhoopConnecting(false);
+    }
+  };
+
+  const handleDisconnectWhoop = async () => {
+    try {
+      const res = await fetch("/api/whoop/disconnect", { method: "POST" });
+
+      if (!res.ok) throw new Error("Disconnect failed");
+
+      setWhoopConnected(false);
+      toast.success("WHOOP getrennt");
+    } catch {
+      toast.error("Fehler beim Trennen von WHOOP");
+    }
+  };
+
+  const handleSyncWhoop = async () => {
+    setWhoopSyncing(true);
+    try {
+      const res = await fetch("/api/whoop/sync", { method: "POST" });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Sync failed");
+
+      toast.success(data.message || "WHOOP-Daten synchronisiert");
+    } catch (err) {
+      toast.error("Fehler beim Synchronisieren");
+    } finally {
+      setWhoopSyncing(false);
     }
   };
 
@@ -375,6 +449,64 @@ export default function ProfilPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* WHOOP Integration */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Watch className="h-5 w-5" />
+                WHOOP Wearable
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Verbinde dein WHOOP für automatische Schlaf-, Recovery- und Strain-Daten.
+              </p>
+
+              {whoopConnected ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-success">
+                    <div className="h-2 w-2 rounded-full bg-success" />
+                    <span className="font-medium">WHOOP verbunden</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSyncWhoop}
+                      disabled={whoopSyncing}
+                      className="flex-1 min-h-[48px]"
+                    >
+                      <RefreshCw
+                        className={`h-4 w-4 mr-2 ${
+                          whoopSyncing ? "animate-spin" : ""
+                        }`}
+                      />
+                      {whoopSyncing ? "Synchronisiere..." : "Jetzt synchronisieren"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDisconnectWhoop}
+                      className="min-h-[48px] text-destructive border-destructive/30 hover:bg-destructive/5"
+                    >
+                      <Unlink className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleConnectWhoop}
+                  disabled={whoopConnecting}
+                  className="w-full min-h-[48px]"
+                >
+                  <Watch className="h-4 w-4 mr-2" />
+                  {whoopConnecting ? "Verbinde..." : "Mit WHOOP verbinden"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Dark Mode */}
           <Card>
