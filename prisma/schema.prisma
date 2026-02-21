@@ -1,0 +1,330 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Nutzer & Profil ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile        UserProfile?
+  healthProfile  HealthProfile?
+  gelenkProbleme GelenkProblem[]
+  fitnessTests   FitnessTest[]
+  trainingPlans  TrainingPlan[]
+  workoutLogs    WorkoutLog[]
+  nutritionPlans NutritionPlan[]
+  nutritionLogs  NutritionLog[]
+  bodyMetrics    BodyMetric[]
+  wellnessLogs   WellnessLog[]
+  conversations  AIConversation[]
+  settings       UserSettings?
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  alter           Int
+  gewicht         Float
+  groesse         Float
+  bmi             Float?
+  erfahrung       String
+  hauptziel       String
+  trainingstagePW Int
+  onboardingDone  Boolean  @default(false)
+  fitnessLevel    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HealthProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  herzKreislauf      Boolean  @default(false)
+  bluthochdruck      Boolean  @default(false)
+  diabetes           Boolean  @default(false)
+  medikamente        String?
+  vorerkrankungen    String?
+  aerztlicheFreigabe Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GelenkProblem {
+  id          String   @id @default(cuid())
+  userId      String
+  gelenk      String
+  seite       String
+  schweregrad Int
+  notiz       String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Fitnesstest ─────────────────────────────────────────────
+
+model FitnessTest {
+  id         String                @id @default(cuid())
+  userId     String
+  datum      DateTime              @default(now())
+  createdAt  DateTime              @default(now())
+  ergebnisse FitnessTestErgebnis[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FitnessTestErgebnis {
+  id              String  @id @default(cuid())
+  fitnessTestId   String
+  uebungName      String
+  gewicht         Float?
+  wiederholungen  Int?
+  dauer           Int?
+  rpe             Int?
+  geschaetztes1RM Float?
+  fitnessLevel    String?
+
+  fitnessTest FitnessTest @relation(fields: [fitnessTestId], references: [id], onDelete: Cascade)
+}
+
+// ─── Übungskatalog ───────────────────────────────────────────
+
+model Uebung {
+  id                  String  @id @default(cuid())
+  name                String  @unique
+  kategorie           String
+  muskelgruppen       String
+  geraet              String
+  gelenkbelastung     String
+  schwierigkeitsgrad  String
+  alternativeIds      String?
+  beschreibung        String?
+  tempo               String?
+  istMaschinenVariante Boolean @default(false)
+
+  planUebungen PlanUebung[]
+}
+
+// ─── Trainingsplan ───────────────────────────────────────────
+
+model TrainingPlan {
+  id         String             @id @default(cuid())
+  userId     String
+  name       String
+  woche      Int
+  istAktiv   Boolean            @default(true)
+  istDeload  Boolean            @default(false)
+  startDatum DateTime
+  endDatum   DateTime
+  createdAt  DateTime           @default(now())
+  einheiten  TrainingsEinheit[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrainingsEinheit {
+  id             String       @id @default(cuid())
+  trainingPlanId String
+  name           String
+  wochentag      Int
+  typ            String
+  aufwaermen     String?
+  cooldown       String?
+  sortierung     Int          @default(0)
+  uebungen       PlanUebung[]
+  workoutLogs    WorkoutLog[]
+
+  trainingPlan TrainingPlan @relation(fields: [trainingPlanId], references: [id], onDelete: Cascade)
+}
+
+model PlanUebung {
+  id                  String @id @default(cuid())
+  trainingsEinheitId  String
+  uebungId            String
+  saetze              Int
+  wiederholungen      String
+  gewicht             Float?
+  rir                 Int
+  pauseSekunden       Int    @default(120)
+  tempo               String?
+  notizen             String?
+  sortierung          Int    @default(0)
+
+  trainingsEinheit TrainingsEinheit @relation(fields: [trainingsEinheitId], references: [id], onDelete: Cascade)
+  uebung           Uebung           @relation(fields: [uebungId], references: [id])
+}
+
+// ─── Workout-Logging ─────────────────────────────────────────
+
+model WorkoutLog {
+  id                  String      @id @default(cuid())
+  userId              String
+  trainingsEinheitId  String
+  startZeit           DateTime
+  endZeit             DateTime?
+  gesamtRPE           Int?
+  notizen             String?
+  createdAt           DateTime    @default(now())
+  uebungLogs          UebungLog[]
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trainingsEinheit TrainingsEinheit @relation(fields: [trainingsEinheitId], references: [id])
+}
+
+model UebungLog {
+  id           String    @id @default(cuid())
+  workoutLogId String
+  uebungName   String
+  sortierung   Int       @default(0)
+  satzLogs     SatzLog[]
+
+  workoutLog WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+}
+
+model SatzLog {
+  id             String  @id @default(cuid())
+  uebungLogId    String
+  satzNummer     Int
+  gewicht        Float?
+  wiederholungen Int?
+  rir            Int?
+  rpe            Int?
+  dauer          Int?
+  notiz          String?
+
+  uebungLog UebungLog @relation(fields: [uebungLogId], references: [id], onDelete: Cascade)
+}
+
+// ─── Ernährung ───────────────────────────────────────────────
+
+model NutritionPlan {
+  id              String     @id @default(cuid())
+  userId          String
+  datum           DateTime
+  istTrainingstag Boolean
+  kalorien        Int
+  proteinG        Float
+  kohlenhydrateG  Float
+  fettG           Float
+  leucinG         Float?
+  mahlzeiten      Mahlzeit[]
+  createdAt       DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Mahlzeit {
+  id              String  @id @default(cuid())
+  nutritionPlanId String
+  name            String
+  uhrzeit         String?
+  kalorien        Int
+  proteinG        Float
+  kohlenhydrateG  Float
+  fettG           Float
+  leucinG         Float?
+  rezept          String?
+  istPostWorkout  Boolean @default(false)
+  sortierung      Int     @default(0)
+
+  nutritionPlan NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+}
+
+model NutritionLog {
+  id             String   @id @default(cuid())
+  userId         String
+  datum          DateTime
+  mahlzeitName   String
+  kalorien       Int?
+  proteinG       Float?
+  kohlenhydrateG Float?
+  fettG          Float?
+  leucinG        Float?
+  notiz          String?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Tracking ────────────────────────────────────────────────
+
+model BodyMetric {
+  id                  String   @id @default(cuid())
+  userId              String
+  datum               DateTime
+  gewicht             Float?
+  koerperfett         Float?
+  brustumfang         Float?
+  taillenumfang       Float?
+  oberarmumfang       Float?
+  oberschenkelumfang  Float?
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WellnessLog {
+  id              String   @id @default(cuid())
+  userId          String
+  datum           DateTime
+  schlafStunden   Float?
+  schlafQualitaet Int?
+  energie         Int?
+  stress          Int?
+  muskelkater     Int?
+  stimmung        Int?
+  notiz           String?
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── KI-Chat ─────────────────────────────────────────────────
+
+model AIConversation {
+  id          String        @id @default(cuid())
+  userId      String
+  titel       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  nachrichten AINachricht[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AINachricht {
+  id               String   @id @default(cuid())
+  aiConversationId String
+  rolle            String
+  inhalt           String
+  createdAt        DateTime @default(now())
+
+  conversation AIConversation @relation(fields: [aiConversationId], references: [id], onDelete: Cascade)
+}
+
+// ─── Einstellungen ───────────────────────────────────────────
+
+model UserSettings {
+  id                 String  @id @default(cuid())
+  userId             String  @unique
+  darkMode           Boolean @default(false)
+  einheiten          String  @default("metrisch")
+  benachrichtigungen Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
