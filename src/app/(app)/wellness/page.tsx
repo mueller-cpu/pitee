@@ -279,23 +279,29 @@ export default function WellnessPage() {
             </p>
 
             <div className="flex justify-between items-center gap-2">
-              {[1, 2, 3, 4, 5].map((val) => (
-                <label key={val} className="relative flex-1 group cursor-pointer">
-                  <input
-                    type="radio"
-                    name={m.key}
-                    className="peer hidden"
-                    checked={form[m.key] === val}
-                    onChange={() => setForm(f => ({ ...f, [m.key]: val }))}
-                  />
-                  <div className={cn(
-                    "h-12 flex items-center justify-center rounded-xl bg-slate-800 border-2 border-transparent transition-all",
-                    m.activeClass.split(" ").map(c => `peer-checked:${c}`).join(" ")
-                  )}>
-                    <span className="text-lg font-bold group-hover:scale-110 transition-transform">{val}</span>
-                  </div>
-                </label>
-              ))}
+              {[1, 2, 3, 4, 5].map((val) => {
+                const isSelected = form[m.key] === val;
+                return (
+                  <label key={val} className="relative flex-1 group cursor-pointer">
+                    <input
+                      type="radio"
+                      name={m.key}
+                      className="hidden"
+                      checked={isSelected}
+                      onChange={() => setForm(f => ({ ...f, [m.key]: val }))}
+                    />
+                    <div className={cn(
+                      "h-12 flex items-center justify-center rounded-xl border-2 transition-all",
+                      isSelected ? m.activeClass : "bg-slate-800 border-transparent text-slate-400 group-hover:bg-slate-700"
+                    )}>
+                      <span className={cn(
+                        "text-lg font-bold transition-transform",
+                        isSelected ? "scale-110" : "group-hover:scale-110"
+                      )}>{val}</span>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
             {m.key === "schlafQualitaet" && (
               <div className="flex justify-between text-[10px] uppercase tracking-widest text-slate-500 font-bold px-1">
