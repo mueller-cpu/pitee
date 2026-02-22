@@ -190,6 +190,14 @@
     filter: drop-shadow(0 0 8px rgba(188, 19, 254, 0.4));
   }
 
+  .chart-glow-red {
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.4));
+  }
+
+  .chart-glow-orange {
+    filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.4));
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

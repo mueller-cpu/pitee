@@ -352,6 +352,9 @@ function WellnessTab({ data }: { data: WellnessEintrag[] }) {
               <Tooltip contentStyle={tooltipStyle} />
               <Line type="monotone" dataKey="schlafQualitaet" stroke="#00F5FF" strokeWidth={3} dot={false} name="Schlaf" className="chart-glow-blue" />
               <Line type="monotone" dataKey="energie" stroke="#39FF14" strokeWidth={3} dot={false} name="Energie" className="chart-glow-green" />
+              <Line type="monotone" dataKey="stress" stroke="#ef4444" strokeWidth={3} dot={false} name="Stress" className="chart-glow-red" />
+              <Line type="monotone" dataKey="muskelkater" stroke="#f97316" strokeWidth={3} dot={false} name="Muskelkater" className="chart-glow-orange" />
+              <Line type="monotone" dataKey="stimmung" stroke="#a855f7" strokeWidth={3} dot={false} name="Stimmung" className="chart-glow-purple" />
             </LineChart>
           </ResponsiveContainer>
         </div>
