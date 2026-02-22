@@ -101,7 +101,7 @@ export class WhoopClient {
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: "code",
-      scope: "read:recovery read:cycles read:sleep read:profile",
+      scope: "offline read:recovery read:cycles read:sleep read:profile",
       state,
     });
     return `${WHOOP_AUTH_URL}?${params.toString()}`;

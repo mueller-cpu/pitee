@@ -41,7 +41,7 @@ export async function syncWhoopData(userId: string): Promise<{
         where: { userId },
         data: {
           accessToken: tokenResponse.access_token,
-          refreshToken: tokenResponse.refresh_token,
+          refreshToken: tokenResponse.refresh_token || connection.refreshToken,
           expiresAt: new Date(Date.now() + tokenResponse.expires_in * 1000),
         },
       });
@@ -81,8 +81,8 @@ export async function syncWhoopData(userId: string): Promise<{
       // Schlafstunden berechnen (ms in Stunden)
       const schlafStunden = sleep
         ? (sleep.score.stage_summary.total_in_bed_time_milli -
-            sleep.score.stage_summary.total_awake_time_milli) /
-          (1000 * 60 * 60)
+          sleep.score.stage_summary.total_awake_time_milli) /
+        (1000 * 60 * 60)
         : null;
 
       // Schlafqualität berechnen (aus Sleep Performance)

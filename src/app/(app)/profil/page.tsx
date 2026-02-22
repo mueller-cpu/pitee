@@ -2,13 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/layout/Header";
-import PageContainer from "@/components/layout/PageContainer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -24,11 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, Scale, Ruler, LogOut, Dumbbell, Save, Sun, Moon, Watch, RefreshCw, Unlink, UtensilsCrossed, Pencil } from "lucide-react";
-import { useTheme } from "next-themes";
-import { toast } from "sonner";
-
-// ── Types ──
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface UserData {
   id: string;
@@ -51,13 +44,7 @@ interface UserData {
 interface KoerperForm {
   gewicht: string;
   koerperfett: string;
-  brustumfang: string;
-  taillenumfang: string;
-  oberarmumfang: string;
-  oberschenkelumfang: string;
 }
-
-// ── Helper ──
 
 const ERFAHRUNG_LABELS: Record<string, string> = {
   einsteiger: "Einsteiger",
@@ -66,56 +53,11 @@ const ERFAHRUNG_LABELS: Record<string, string> = {
   fortgeschritten: "Fortgeschritten",
 };
 
-const ZIEL_LABELS: Record<string, string> = {
-  muskelaufbau: "Muskelaufbau",
-  kraft: "Kraft",
-  fettabbau: "Fettabbau",
-  gesundheit: "Allgemeine Gesundheit",
-};
-
 const ERNAEHRUNGSWEISE_LABELS: Record<string, string> = {
   omnivor: "Alles (Omnivor)",
   vegetarisch: "Vegetarisch",
   vegan: "Vegan",
 };
-
-// ── Metric Input Row ──
-function MetricInput({
-  label,
-  unit,
-  value,
-  onChange,
-  icon: Icon,
-}: {
-  label: string;
-  unit: string;
-  value: string;
-  onChange: (v: string) => void;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
-      <div className="flex-1">
-        <Label className="text-sm text-muted-foreground">{label}</Label>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Input
-          type="number"
-          step="0.1"
-          min="0"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-20 min-h-[48px] text-center text-base font-medium"
-          placeholder="--"
-        />
-        <span className="text-sm text-muted-foreground w-8">{unit}</span>
-      </div>
-    </div>
-  );
-}
-
-// ── Main Page ──
 
 export default function ProfilPage() {
   const router = useRouter();
@@ -128,7 +70,6 @@ export default function ProfilPage() {
   const [whoopConnecting, setWhoopConnecting] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // Ernährungseinstellungen Dialog
   const [ernaehrungDialogOpen, setErnaehrungDialogOpen] = useState(false);
   const [ernaehrungForm, setErnaehrungForm] = useState({
     anzahlMahlzeiten: 4,
@@ -139,14 +80,9 @@ export default function ProfilPage() {
   const [koerperForm, setKoerperForm] = useState<KoerperForm>({
     gewicht: "",
     koerperfett: "",
-    brustumfang: "",
-    taillenumfang: "",
-    oberarmumfang: "",
-    oberschenkelumfang: "",
   });
 
   useEffect(() => {
-    // Load user data
     fetch("/api/auth/me")
       .then((res) => {
         if (!res.ok) {
@@ -157,7 +93,6 @@ export default function ProfilPage() {
       })
       .then((data) => {
         setUser(data);
-        // Initialize Ernährungseinstellungen form
         if (data.profile) {
           setErnaehrungForm({
             anzahlMahlzeiten: data.profile.anzahlMahlzeiten || 4,
@@ -168,7 +103,6 @@ export default function ProfilPage() {
       .catch((err) => console.error("Profile fetch error:", err))
       .finally(() => setLoading(false));
 
-    // Load latest body metrics to pre-fill form
     fetch("/api/profil/letzte-koerperdaten")
       .then((res) => res.json())
       .then((response) => {
@@ -177,39 +111,29 @@ export default function ProfilPage() {
           setKoerperForm({
             gewicht: data.gewicht ? String(data.gewicht) : "",
             koerperfett: data.koerperfett ? String(data.koerperfett) : "",
-            brustumfang: data.brustumfang ? String(data.brustumfang) : "",
-            taillenumfang: data.taillenumfang ? String(data.taillenumfang) : "",
-            oberarmumfang: data.oberarmumfang ? String(data.oberarmumfang) : "",
-            oberschenkelumfang: data.oberschenkelumfang ? String(data.oberschenkelumfang) : "",
           });
         }
       })
       .catch((err) => console.error("Last body metrics error:", err));
 
-    // Check WHOOP connection status
     fetch("/api/whoop/status")
       .then((res) => {
         if (!res.ok) {
-          console.error("WHOOP status check failed:", res.status);
           return { connected: false };
         }
         return res.json();
       })
       .then((data) => {
-        console.log("WHOOP status:", data);
         setWhoopConnected(data.connected || false);
       })
       .catch((err) => {
-        console.error("WHOOP status error:", err);
         setWhoopConnected(false);
       });
 
-    // Check URL params for WHOOP callback
     const params = new URLSearchParams(window.location.search);
     if (params.get("whoop_connected") === "true") {
       toast.success("WHOOP erfolgreich verbunden und synchronisiert!");
       setWhoopConnected(true);
-      // Clean up URL
       window.history.replaceState({}, "", "/profil");
     } else if (params.get("whoop_error")) {
       toast.error("WHOOP-Verbindung fehlgeschlagen");
@@ -222,24 +146,9 @@ export default function ProfilPage() {
     try {
       const body = {
         gewicht: koerperForm.gewicht ? parseFloat(koerperForm.gewicht) : null,
-        koerperfett: koerperForm.koerperfett
-          ? parseFloat(koerperForm.koerperfett)
-          : null,
-        brustumfang: koerperForm.brustumfang
-          ? parseFloat(koerperForm.brustumfang)
-          : null,
-        taillenumfang: koerperForm.taillenumfang
-          ? parseFloat(koerperForm.taillenumfang)
-          : null,
-        oberarmumfang: koerperForm.oberarmumfang
-          ? parseFloat(koerperForm.oberarmumfang)
-          : null,
-        oberschenkelumfang: koerperForm.oberschenkelumfang
-          ? parseFloat(koerperForm.oberschenkelumfang)
-          : null,
+        koerperfett: koerperForm.koerperfett ? parseFloat(koerperForm.koerperfett) : null,
       };
 
-      // Require at least one value
       const hasValue = Object.values(body).some((v) => v !== null);
       if (!hasValue) {
         toast.error("Bitte mindestens einen Wert eingeben.");
@@ -255,9 +164,9 @@ export default function ProfilPage() {
 
       if (!res.ok) throw new Error("Save failed");
 
-      toast.success("Koerperdaten gespeichert!");
+      toast.success("Körperdaten gespeichert!");
     } catch {
-      toast.error("Fehler beim Speichern der Koerperdaten.");
+      toast.error("Fehler beim Speichern der Körperdaten.");
     } finally {
       setSaving(false);
     }
@@ -283,7 +192,6 @@ export default function ProfilPage() {
   const handleDisconnectWhoop = async () => {
     try {
       const res = await fetch("/api/whoop/disconnect", { method: "POST" });
-
       if (!res.ok) throw new Error("Disconnect failed");
 
       setWhoopConnected(false);
@@ -299,8 +207,6 @@ export default function ProfilPage() {
       const res = await fetch("/api/whoop/sync", { method: "POST" });
       const data = await res.json();
 
-      console.log("WHOOP sync response:", data);
-
       if (!res.ok) {
         throw new Error(data.error || "Sync failed");
       }
@@ -311,7 +217,6 @@ export default function ProfilPage() {
         toast.info("Keine neuen Daten verfügbar");
       }
     } catch (err) {
-      console.error("WHOOP sync error:", err);
       toast.error(err instanceof Error ? err.message : "Fehler beim Synchronisieren");
     } finally {
       setWhoopSyncing(false);
@@ -331,17 +236,16 @@ export default function ProfilPage() {
 
       if (!res.ok) throw new Error(data.error || "Save failed");
 
-      // Update local user state
       setUser((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
           profile: prev.profile
             ? {
-                ...prev.profile,
-                anzahlMahlzeiten: data.anzahlMahlzeiten,
-                ernaehrungsweise: data.ernaehrungsweise,
-              }
+              ...prev.profile,
+              anzahlMahlzeiten: data.anzahlMahlzeiten,
+              ernaehrungsweise: data.ernaehrungsweise,
+            }
             : prev.profile,
         };
       });
@@ -349,8 +253,7 @@ export default function ProfilPage() {
       toast.success("Ernährungseinstellungen gespeichert!");
       setErnaehrungDialogOpen(false);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Fehler beim Speichern.";
+      const message = error instanceof Error ? error.message : "Fehler beim Speichern.";
       toast.error(message);
     } finally {
       setSavingErnaehrung(false);
@@ -368,438 +271,317 @@ export default function ProfilPage() {
     }
   };
 
-  if (loading) {
+  if (loading || !user) {
     return (
-      <>
-        <Header title="Profil" />
-        <PageContainer>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="h-28 animate-pulse bg-muted rounded-xl"
-              />
-            ))}
-          </div>
-        </PageContainer>
-      </>
+      <div className="flex flex-col min-h-screen bg-[#0A0A0B] text-white pt-20">
+        <div className="flex items-center justify-center flex-1">
+          <div className="animate-pulse text-slate-500">Profil wird geladen...</div>
+        </div>
+      </div>
     );
   }
 
-  if (!user) return null;
+  // Get Initials
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
 
   return (
-    <>
-      <Header title="Profil" />
-      <PageContainer>
-        <div className="space-y-6">
-          {/* User Info */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-7 w-7 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold truncate">
-                    {user.name}
-                  </h2>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Body Metrics Input */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Scale className="h-5 w-5" />
-                Koerperdaten erfassen
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-4">
-              <MetricInput
-                label="Gewicht"
-                unit="kg"
-                value={koerperForm.gewicht}
-                onChange={(v) =>
-                  setKoerperForm((f) => ({ ...f, gewicht: v }))
-                }
-                icon={Scale}
-              />
-              <Separator />
-              <MetricInput
-                label="Koerperfett"
-                unit="%"
-                value={koerperForm.koerperfett}
-                onChange={(v) =>
-                  setKoerperForm((f) => ({ ...f, koerperfett: v }))
-                }
-                icon={Ruler}
-              />
-              <Separator />
-              <MetricInput
-                label="Brustumfang"
-                unit="cm"
-                value={koerperForm.brustumfang}
-                onChange={(v) =>
-                  setKoerperForm((f) => ({ ...f, brustumfang: v }))
-                }
-                icon={Ruler}
-              />
-              <Separator />
-              <MetricInput
-                label="Taillenumfang"
-                unit="cm"
-                value={koerperForm.taillenumfang}
-                onChange={(v) =>
-                  setKoerperForm((f) => ({ ...f, taillenumfang: v }))
-                }
-                icon={Ruler}
-              />
-              <Separator />
-              <MetricInput
-                label="Oberarmumfang"
-                unit="cm"
-                value={koerperForm.oberarmumfang}
-                onChange={(v) =>
-                  setKoerperForm((f) => ({ ...f, oberarmumfang: v }))
-                }
-                icon={Ruler}
-              />
-              <Separator />
-              <MetricInput
-                label="Oberschenkelumfang"
-                unit="cm"
-                value={koerperForm.oberschenkelumfang}
-                onChange={(v) =>
-                  setKoerperForm((f) => ({ ...f, oberschenkelumfang: v }))
-                }
-                icon={Ruler}
-              />
-
-              <Button
-                onClick={handleSaveKoerperdaten}
-                disabled={saving}
-                className="w-full min-h-[52px] text-base font-semibold mt-2"
-              >
-                {saving ? (
-                  "Speichern..."
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Save className="h-5 w-5" />
-                    Messen & Speichern
-                  </span>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Training Settings */}
-          {user.profile && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Dumbbell className="h-5 w-5" />
-                  Trainingseinstellungen
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-3">
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">Geschlecht</span>
-                  <span className="text-sm font-medium">
-                    {user.profile.geschlecht === "weiblich" ? "Weiblich" : "Männlich"}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">Alter</span>
-                  <span className="text-sm font-medium">
-                    {user.profile.alter} Jahre
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">Größe</span>
-                  <span className="text-sm font-medium">
-                    {user.profile.groesse} cm
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">
-                    Erfahrungslevel
-                  </span>
-                  <span className="text-sm font-medium">
-                    {ERFAHRUNG_LABELS[user.profile.erfahrung] ||
-                      user.profile.erfahrung}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">Ziel</span>
-                  <span className="text-sm font-medium">
-                    {ZIEL_LABELS[user.profile.hauptziel] ||
-                      user.profile.hauptziel}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">
-                    Trainingstage / Woche
-                  </span>
-                  <span className="text-sm font-medium">
-                    {user.profile.trainingstagePW}x
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Ernährungseinstellungen */}
-          {user.profile && (
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <UtensilsCrossed className="h-5 w-5" />
-                    Ernährungseinstellungen
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setErnaehrungDialogOpen(true)}
-                    className="h-9 w-9 p-0"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-3">
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">Mahlzeiten pro Tag</span>
-                  <span className="text-sm font-medium">
-                    {user.profile.anzahlMahlzeiten}x
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center min-h-[48px]">
-                  <span className="text-sm text-muted-foreground">Ernährungsweise</span>
-                  <span className="text-sm font-medium">
-                    {ERNAEHRUNGSWEISE_LABELS[user.profile.ernaehrungsweise] || user.profile.ernaehrungsweise}
-                  </span>
-                </div>
-                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    <strong>Hinweis:</strong> Diese Einstellungen werden bei der KI-Generierung von Ernährungsplänen berücksichtigt.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* WHOOP Integration */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Watch className="h-5 w-5" />
-                WHOOP Wearable
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Verbinde dein WHOOP für automatische Schlaf-, Recovery- und Strain-Daten.
-              </p>
-
-              {whoopConnected ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-success">
-                    <div className="h-2 w-2 rounded-full bg-success" />
-                    <span className="font-medium">WHOOP verbunden</span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSyncWhoop}
-                      disabled={whoopSyncing}
-                      className="flex-1 min-h-[48px]"
-                    >
-                      <RefreshCw
-                        className={`h-4 w-4 mr-2 ${
-                          whoopSyncing ? "animate-spin" : ""
-                        }`}
-                      />
-                      {whoopSyncing ? "Synchronisiere..." : "Jetzt synchronisieren"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDisconnectWhoop}
-                      className="min-h-[48px] text-destructive border-destructive/30 hover:bg-destructive/5"
-                    >
-                      <Unlink className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  onClick={handleConnectWhoop}
-                  disabled={whoopConnecting}
-                  className="w-full min-h-[48px]"
-                >
-                  <Watch className="h-4 w-4 mr-2" />
-                  {whoopConnecting ? "Verbinde..." : "Mit WHOOP verbinden"}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Dark Mode */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between min-h-[56px]">
-                <div className="flex items-center gap-3">
-                  {theme === "dark" ? (
-                    <Moon className="h-5 w-5 text-muted-foreground" />
-                  ) : (
-                    <Sun className="h-5 w-5 text-muted-foreground" />
-                  )}
-                  <span className="font-medium">Dark Mode</span>
-                </div>
-                <button
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className={`relative w-14 h-8 rounded-full transition-colors min-h-[48px] flex items-center ${
-                    theme === "dark" ? "bg-primary" : "bg-muted"
-                  }`}
-                  aria-label="Dark Mode umschalten"
-                >
-                  <span
-                    className={`absolute top-1/2 -translate-y-1/2 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
-                      theme === "dark" ? "translate-x-6" : ""
-                    }`}
-                  />
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Logout */}
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="w-full min-h-[52px] text-base font-semibold text-destructive border-destructive/30 hover:bg-destructive/5"
-          >
-            {loggingOut ? (
-              "Abmelden..."
-            ) : (
-              <span className="flex items-center gap-2">
-                <LogOut className="h-5 w-5" />
-                Abmelden
-              </span>
-            )}
-          </Button>
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden pb-32 bg-[#0A0A0B] text-white font-display">
+      <div className="flex items-center bg-[#0A0A0B]/80 backdrop-blur-md p-6 sticky top-0 z-30">
+        <div
+          onClick={() => router.back()}
+          className="flex h-10 w-10 items-center justify-center cursor-pointer bg-[#161618] rounded-full border border-[#262629]"
+        >
+          <span className="material-symbols-outlined text-2xl text-white">chevron_left</span>
         </div>
+        <h2 className="text-lg font-bold flex-1 text-center tracking-tight">PROFIL</h2>
+        <div
+          onClick={() => setErnaehrungDialogOpen(true)}
+          className="flex h-10 w-10 items-center justify-center cursor-pointer bg-[#161618] rounded-full border border-[#262629]"
+        >
+          <span className="material-symbols-outlined text-xl text-white">settings</span>
+        </div>
+      </div>
 
-        {/* Ernährungseinstellungen Dialog */}
-        <Dialog open={ernaehrungDialogOpen} onOpenChange={setErnaehrungDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Ernährungseinstellungen bearbeiten</DialogTitle>
-              <DialogDescription>
-                Diese Einstellungen werden bei der Generierung deiner Ernährungspläne berücksichtigt.
-              </DialogDescription>
-            </DialogHeader>
+      <div className="flex flex-col items-center px-6 py-4 gap-6">
+        <div className="relative p-1 avatar-border rounded-full shadow-2xl">
+          <div className="h-32 w-32 rounded-full bg-[#0A0A0B] flex items-center justify-center overflow-hidden border-2 border-[#0A0A0B]">
+            <span className="text-4xl font-extrabold text-white tracking-tighter">{initials}</span>
+          </div>
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 rank-gradient px-5 py-1.5 rounded-full shadow-lg border border-white/20">
+            {/* Gamification title mapped or hardcoded for now */}
+            <p className="text-[9px] uppercase tracking-[0.2em] font-black text-slate-900 leading-none">Mitglied</p>
+          </div>
+        </div>
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight mb-1">{user.name}</h1>
+          <p className="text-slate-400 text-sm font-medium">{user.email}</p>
+        </div>
+      </div>
 
-            <div className="space-y-5 py-4">
-              {/* Anzahl Mahlzeiten */}
-              <div className="space-y-2">
-                <Label htmlFor="anzahlMahlzeiten" className="text-sm font-medium">
-                  Mahlzeiten pro Tag
-                </Label>
-                <Select
-                  value={String(ernaehrungForm.anzahlMahlzeiten)}
-                  onValueChange={(value) =>
-                    setErnaehrungForm((f) => ({
-                      ...f,
-                      anzahlMahlzeiten: parseInt(value),
-                    }))
-                  }
-                >
-                  <SelectTrigger className="w-full min-h-[48px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">3 Mahlzeiten</SelectItem>
-                    <SelectItem value="4">4 Mahlzeiten</SelectItem>
-                    <SelectItem value="5">5 Mahlzeiten</SelectItem>
-                    <SelectItem value="6">6 Mahlzeiten</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Wähle die Anzahl, die zu deinem Tagesablauf passt.
-                </p>
-              </div>
-
-              {/* Ernährungsweise */}
-              <div className="space-y-2">
-                <Label htmlFor="ernaehrungsweise" className="text-sm font-medium">
-                  Ernährungsweise
-                </Label>
-                <Select
-                  value={ernaehrungForm.ernaehrungsweise}
-                  onValueChange={(value) =>
-                    setErnaehrungForm((f) => ({ ...f, ernaehrungsweise: value }))
-                  }
-                >
-                  <SelectTrigger className="w-full min-h-[48px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="omnivor">
-                      Alles (Omnivor)
-                    </SelectItem>
-                    <SelectItem value="vegetarisch">
-                      Vegetarisch
-                    </SelectItem>
-                    <SelectItem value="vegan">Vegan</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {ernaehrungForm.ernaehrungsweise === "vegetarisch" &&
-                    "Kein Fleisch oder Fisch, aber Eier und Milchprodukte."}
-                  {ernaehrungForm.ernaehrungsweise === "vegan" &&
-                    "Keine tierischen Produkte. B12-Supplementierung wird empfohlen."}
-                  {ernaehrungForm.ernaehrungsweise === "omnivor" &&
-                    "Alle Lebensmittel sind erlaubt."}
-                </p>
+      <div className="px-6 space-y-8 mt-4">
+        {/* Korperdaten Section */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black tracking-[0.2em] text-slate-500 uppercase">Körperdaten</h3>
+            <span className="material-symbols-outlined text-primary text-xl">straighten</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Gewicht</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={koerperForm.gewicht}
+                  onChange={(e) => setKoerperForm({ ...koerperForm, gewicht: e.target.value })}
+                  className="w-full rounded-2xl bg-[#161618] border border-[#262629] p-4 text-xl font-bold text-white focus:ring-0 input-focus-glow transition-all focus:outline-none"
+                  placeholder="--"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">KG</span>
               </div>
             </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Größe</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  readOnly
+                  value={user.profile?.groesse || "--"}
+                  className="w-full rounded-2xl bg-[#161618] border border-[#262629] p-4 text-xl font-bold text-white opacity-80 cursor-not-allowed focus:outline-none"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">CM</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Alter</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  readOnly
+                  value={user.profile?.alter || "--"}
+                  className="w-full rounded-2xl bg-[#161618] border border-[#262629] p-4 text-xl font-bold text-white opacity-80 cursor-not-allowed focus:outline-none"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">JAHRE</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">KFA</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={koerperForm.koerperfett}
+                  onChange={(e) => setKoerperForm({ ...koerperForm, koerperfett: e.target.value })}
+                  className="w-full rounded-2xl bg-[#161618] border border-[#262629] p-4 text-xl font-bold text-white focus:ring-0 input-focus-glow transition-all focus:outline-none"
+                  placeholder="--"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">%</span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleSaveKoerperdaten}
+            disabled={saving}
+            className="w-full bg-primary text-[#0A0A0B] font-black py-5 rounded-2xl shadow-[0_4px_20px_rgba(204,255,0,0.2)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
+          >
+            {saving ? "Wird gespeichert..." : "Änderungen Speichern"}
+          </button>
+        </section>
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setErnaehrungDialogOpen(false)}
-                className="min-h-[48px]"
+        {/* Einstellungen Section */}
+        <section className="space-y-4">
+          <h3 className="text-xs font-black tracking-[0.2em] text-slate-500 uppercase">Einstellungen</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center p-5 bg-[#161618] rounded-2xl border border-[#262629]">
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-[#00FFC2]">fitness_center</span>
+                <span className="font-medium text-slate-300">Level</span>
+              </div>
+              <span className="font-bold text-white">
+                {user.profile ? ERFAHRUNG_LABELS[user.profile.erfahrung] || user.profile.erfahrung : "--"}
+              </span>
+            </div>
+            <div
+              className="flex justify-between items-center p-5 bg-[#161618] rounded-2xl border border-[#262629] cursor-pointer active:bg-white/5"
+              onClick={() => setErnaehrungDialogOpen(true)}
+            >
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-[#00FFC2]">nutrition</span>
+                <span className="font-medium text-slate-300">Ernährungsform</span>
+              </div>
+              <span className="font-bold text-white">
+                {user.profile ? ERNAEHRUNGSWEISE_LABELS[user.profile.ernaehrungsweise] || user.profile.ernaehrungsweise : "--"}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* WHOOP Data Section */}
+        <section className="bg-[#161618] rounded-3xl p-6 border border-[#262629] relative overflow-hidden">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#00FFC2]/10 p-2 rounded-lg">
+                <span className="material-symbols-outlined text-[#00FFC2]">sync_alt</span>
+              </div>
+              <h3 className="text-lg font-bold">WHOOP Data</h3>
+            </div>
+            {whoopConnected && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-[#00FFC2]/10 border border-[#00FFC2]/20 rounded-full">
+                <div className="h-1.5 w-1.5 bg-[#00FFC2] rounded-full animate-pulse shadow-[0_0_8px_#00FFC2]"></div>
+                <span className="text-[9px] font-black text-[#00FFC2] uppercase tracking-widest">Active</span>
+              </div>
+            )}
+          </div>
+
+          {whoopConnected ? (
+            <>
+              <button
+                onClick={handleSyncWhoop}
+                disabled={whoopSyncing}
+                className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 border border-white/10 transition-all"
               >
-                Abbrechen
-              </Button>
-              <Button
-                onClick={handleSaveErnaehrungseinstellungen}
-                disabled={savingErnaehrung}
-                className="min-h-[48px]"
+                <span className={cn("material-symbols-outlined text-sm", whoopSyncing && "animate-spin")}>refresh</span>
+                <span className="text-sm uppercase tracking-widest">
+                  {whoopSyncing ? "Synchronisiere..." : "Jetzt synchronisieren"}
+                </span>
+              </button>
+              <div className="mt-4 text-center">
+                <button
+                  onClick={handleDisconnectWhoop}
+                  className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-[#FF3B30] transition-colors"
+                >
+                  Verbindung trennen
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={handleConnectWhoop}
+              disabled={whoopConnecting}
+              className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 border border-white/10 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">watch</span>
+              <span className="text-sm uppercase tracking-widest">
+                {whoopConnecting ? "Verbinde..." : "Mit WHOOP verbinden"}
+              </span>
+            </button>
+          )}
+        </section>
+
+        {/* Erscheinungsbild Section */}
+        <section className="space-y-4">
+          <h3 className="text-xs font-black tracking-[0.2em] text-slate-500 uppercase">Erscheinungsbild</h3>
+          <div className="flex p-1.5 bg-[#161618] rounded-2xl border border-[#262629]">
+            <button
+              onClick={() => setTheme("light")}
+              className={cn("flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all", theme !== "dark" ? "bg-white/10 text-primary shadow-inner" : "text-slate-500")}
+            >
+              <span className="material-symbols-outlined text-xl">light_mode</span>
+              <span className="text-xs uppercase tracking-widest">Light</span>
+            </button>
+            <button
+              onClick={() => setTheme("dark")}
+              className={cn("flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all", theme === "dark" ? "bg-white/10 text-primary shadow-inner" : "text-slate-500")}
+            >
+              <span className="material-symbols-outlined text-xl">dark_mode</span>
+              <span className="text-xs uppercase tracking-widest">Dark</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Logout Section */}
+        <div className="pt-4 pb-12">
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="w-full flex items-center justify-center gap-3 text-[#FF3B30] font-black py-5 rounded-2xl border border-[#FF3B30]/20 bg-[#FF3B30]/5 active:bg-[#FF3B30]/10 transition-all uppercase tracking-[0.2em] text-xs"
+          >
+            <span className="material-symbols-outlined text-lg">logout</span>
+            {loggingOut ? "Wird abgemeldet..." : "Abmelden"}
+          </button>
+          <p className="text-center text-slate-600 text-[10px] mt-8 font-bold tracking-widest uppercase">
+            pitee v2.4.0 • Premium Access
+          </p>
+        </div>
+      </div>
+
+      {/* Ernährungseinstellungen Dialog */}
+      <Dialog open={ernaehrungDialogOpen} onOpenChange={setErnaehrungDialogOpen}>
+        <DialogContent className="bg-[#161618] border border-[#262629] text-white">
+          <DialogHeader>
+            <DialogTitle>Ernährungseinstellungen</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Diese Einstellungen werden bei der Generierung deiner Ernährungspläne berücksichtigt.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-slate-300">Mahlzeiten pro Tag</Label>
+              <Select
+                value={String(ernaehrungForm.anzahlMahlzeiten)}
+                onValueChange={(value) =>
+                  setErnaehrungForm((f) => ({
+                    ...f,
+                    anzahlMahlzeiten: parseInt(value),
+                  }))
+                }
               >
-                {savingErnaehrung ? "Speichern..." : "Speichern"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </PageContainer>
-    </>
+                <SelectTrigger className="w-full min-h-[48px] bg-[#0A0A0B] border-[#262629] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#161618] border-[#262629] text-white">
+                  <SelectItem value="3">3 Mahlzeiten</SelectItem>
+                  <SelectItem value="4">4 Mahlzeiten</SelectItem>
+                  <SelectItem value="5">5 Mahlzeiten</SelectItem>
+                  <SelectItem value="6">6 Mahlzeiten</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-slate-300">Ernährungsweise</Label>
+              <Select
+                value={ernaehrungForm.ernaehrungsweise}
+                onValueChange={(value) =>
+                  setErnaehrungForm((f) => ({ ...f, ernaehrungsweise: value }))
+                }
+              >
+                <SelectTrigger className="w-full min-h-[48px] bg-[#0A0A0B] border-[#262629] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#161618] border-[#262629] text-white">
+                  <SelectItem value="omnivor">Alles (Omnivor)</SelectItem>
+                  <SelectItem value="vegetarisch">Vegetarisch</SelectItem>
+                  <SelectItem value="vegan">Vegan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setErnaehrungDialogOpen(false)}
+              className="min-h-[48px] border-[#262629] bg-transparent text-white hover:bg-white/5 hover:text-white"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleSaveErnaehrungseinstellungen}
+              disabled={savingErnaehrung}
+              className="min-h-[48px] bg-primary text-black hover:bg-primary/90"
+            >
+              {savingErnaehrung ? "Speichern..." : "Speichern"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

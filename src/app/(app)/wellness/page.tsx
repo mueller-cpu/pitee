@@ -2,14 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/layout/Header";
-import PageContainer from "@/components/layout/PageContainer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import WissenschaftSnippet from "@/components/shared/WissenschaftSnippet";
 import {
   ResponsiveContainer,
   LineChart,
@@ -18,6 +10,8 @@ import {
 import { AlertTriangle, Check, Moon, Zap, Brain, Flame, Smile } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import WissenschaftSnippet from "@/components/shared/WissenschaftSnippet";
 
 // ── Types ──
 
@@ -42,70 +36,15 @@ interface WellnessFormData {
   notiz: string;
 }
 
-// ── Rating labels ──
-const RATING_LABELS: Record<number, string> = {
-  1: "Sehr schlecht",
-  2: "Schlecht",
-  3: "Mittel",
-  4: "Gut",
-  5: "Sehr gut",
-};
-
 // ── Metric configs ──
 const METRICS = [
-  { key: "schlafQualitaet" as const, label: "Schlafqualitaet", icon: Moon, color: "hsl(221, 83%, 53%)" },
-  { key: "energie" as const, label: "Energie", icon: Zap, color: "hsl(142, 71%, 45%)" },
-  { key: "stress" as const, label: "Stress", icon: Brain, color: "hsl(0, 84%, 60%)" },
-  { key: "muskelkater" as const, label: "Muskelkater", icon: Flame, color: "hsl(38, 92%, 50%)" },
-  { key: "stimmung" as const, label: "Stimmung", icon: Smile, color: "hsl(262, 83%, 58%)" },
+  { key: "schlafQualitaet" as const, label: "Schlaf", icon: "bedtime", colorClass: "text-blue-400", bgClass: "bg-blue-500/20", activeClass: "border-blue-500 bg-blue-500/10", sparkColor: "#3b82f6" },
+  { key: "energie" as const, label: "Energie", icon: "bolt", colorClass: "text-yellow-500", bgClass: "bg-yellow-500/20", activeClass: "border-yellow-500 bg-yellow-500/10", sparkColor: "#eab308" },
+  { key: "stress" as const, label: "Stress", icon: "psychology", colorClass: "text-red-500", bgClass: "bg-red-500/20", activeClass: "border-red-500 bg-red-500/10", sparkColor: "#ef4444" },
+  { key: "muskelkater" as const, label: "Muskelkater", icon: "local_fire_department", colorClass: "text-orange-500", bgClass: "bg-orange-500/20", activeClass: "border-orange-500 bg-orange-500/10", sparkColor: "#f97316" },
+  { key: "stimmung" as const, label: "Stimmung", icon: "sentiment_satisfied", colorClass: "text-purple-400", bgClass: "bg-purple-500/20", activeClass: "border-purple-500 bg-purple-500/10", sparkColor: "#a855f7" },
 ];
 
-// ── Rating Circle Selector ──
-function RatingSelector({
-  value,
-  onChange,
-  label,
-  icon: Icon,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Icon className="h-5 w-5 text-muted-foreground" />
-        <Label className="text-sm font-medium">{label}</Label>
-      </div>
-      <div className="flex items-center gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onChange(n)}
-            className={cn(
-              "flex items-center justify-center",
-              "w-12 h-12 rounded-full",
-              "text-sm font-semibold",
-              "transition-all duration-200",
-              "border-2",
-              n <= value
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background text-muted-foreground border-muted hover:border-primary/50"
-            )}
-            aria-label={`${label}: ${n} - ${RATING_LABELS[n]}`}
-          >
-            {n}
-          </button>
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">{RATING_LABELS[value]}</p>
-    </div>
-  );
-}
-
-// ── Mini Sparkline ──
 function Sparkline({
   data,
   dataKey,
@@ -135,14 +74,13 @@ function Sparkline({
   );
 }
 
-// ── Main Page ──
-
 export default function WellnessPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [last7Days, setLast7Days] = useState<WellnessLog[]>([]);
   const [whoopDataAvailable, setWhoopDataAvailable] = useState(false);
+  const [whoopDetails, setWhoopDetails] = useState<{ recovery?: number; hrv?: number }>({});
   const [form, setForm] = useState<WellnessFormData>({
     schlafStunden: 7,
     schlafQualitaet: 3,
@@ -165,18 +103,15 @@ export default function WellnessPage() {
       .then((data) => {
         setLast7Days(data.logs || []);
 
-        // Priority 1: Use WHOOP data if available and no manual log exists
         if (data.whoopData && !data.todayLog) {
           setWhoopDataAvailable(true);
           const recovery = data.whoopData.whoopRecovery;
           const hrv = data.whoopData.whoopHRV;
+          setWhoopDetails({ recovery, hrv });
 
-          // Map WHOOP Recovery (0-100%) to schlafQualitaet (1-5)
           const qualityFromRecovery = recovery
             ? Math.min(5, Math.max(1, Math.round((recovery / 100) * 5)))
             : 3;
-
-          // Map WHOOP Recovery to energie (1-5)
           const energieFromRecovery = recovery
             ? Math.min(5, Math.max(1, Math.round((recovery / 100) * 5)))
             : 3;
@@ -185,14 +120,12 @@ export default function WellnessPage() {
             schlafStunden: data.whoopData.schlafStunden ?? 7,
             schlafQualitaet: qualityFromRecovery,
             energie: energieFromRecovery,
-            stress: 3, // WHOOP doesn't track stress
-            muskelkater: 3, // WHOOP doesn't track muskelkater
-            stimmung: 3, // WHOOP doesn't track stimmung
+            stress: 3,
+            muskelkater: 3,
+            stimmung: 3,
             notiz: `Von WHOOP importiert (Recovery: ${recovery}%${hrv ? `, HRV: ${hrv}ms` : ""})`,
           });
-        }
-        // Priority 2: Use today's manually entered log
-        else if (data.todayLog) {
+        } else if (data.todayLog) {
           setWhoopDataAvailable(false);
           setForm({
             schlafStunden: data.todayLog.schlafStunden ?? 7,
@@ -203,9 +136,7 @@ export default function WellnessPage() {
             stimmung: data.todayLog.stimmung ?? 3,
             notiz: data.todayLog.notiz ?? "",
           });
-        }
-        // Priority 3: Defaults (no WHOOP, no manual log)
-        else {
+        } else {
           setWhoopDataAvailable(false);
         }
       })
@@ -237,7 +168,7 @@ export default function WellnessPage() {
       if (!res.ok) throw new Error("Save failed");
 
       toast.success("Wellness-Check-in gespeichert!");
-      loadData();
+      router.back();
     } catch {
       toast.error("Fehler beim Speichern.");
     } finally {
@@ -245,194 +176,205 @@ export default function WellnessPage() {
     }
   };
 
-  // Schlaf-Impact warning conditions
   const showSchlafWarning = form.schlafStunden < 6 || form.energie <= 2;
 
   if (loading) {
     return (
-      <>
-        <Header title="Wellness Check-in" />
-        <PageContainer>
-          <div className="space-y-4">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="h-20 animate-pulse bg-muted rounded-xl"
-              />
-            ))}
+      <div className="flex flex-col min-h-screen bg-[#101622] text-slate-100 font-display">
+        <header className="sticky top-0 z-20 bg-[#101622]/80 backdrop-blur-md px-6 pt-8 pb-4 border-b border-slate-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-100">Wellness Check-in</h1>
+              <p className="text-primary font-medium text-sm">Laden...</p>
+            </div>
           </div>
-        </PageContainer>
-      </>
+        </header>
+        <div className="flex-1 px-6 pt-6 space-y-8 flex items-center justify-center">
+          <div className="animate-pulse text-slate-500">Log wird geladen...</div>
+        </div>
+      </div>
     );
   }
 
+  const todayStr = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long' }).format(new Date());
+
   return (
-    <>
-      <Header title="Wellness Check-in" showBack />
-      <PageContainer>
-        <div className="space-y-6">
-          {/* WHOOP Auto-Import Indicator */}
-          {whoopDataAvailable && (
-            <Card className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                      WHOOP-Daten importiert
-                    </p>
-                    <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
-                      Deine Schlaf- und Erholungsdaten wurden automatisch von WHOOP übernommen. Du kannst sie jederzeit anpassen.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+    <div className="relative flex min-h-screen w-full flex-col bg-[#101622] text-slate-100 overflow-x-hidden pb-32 font-display">
+      {/* Header */}
+      <header className="sticky top-0 z-20 bg-[#101622]/80 backdrop-blur-md px-6 pt-8 pb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-100">Wellness Check-in</h1>
+            <p className="text-primary font-medium text-sm">Heute, {todayStr}</p>
+          </div>
+          <button
+            onClick={() => router.back()}
+            className="bg-slate-800 p-2 rounded-full flex items-center justify-center"
+          >
+            <span className="material-symbols-outlined text-slate-400">close</span>
+          </button>
+        </div>
+      </header>
 
-          {/* Schlafstunden */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Moon className="h-5 w-5 text-muted-foreground" />
-                  <Label className="text-sm font-medium">
-                    Schlafstunden
-                  </Label>
+      <main className="flex-1 px-6 pt-6 space-y-8">
+        {/* Warnungen / Auto-Import */}
+        {showSchlafWarning && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 items-start">
+            <span className="material-symbols-outlined text-amber-500 shrink-0">warning</span>
+            <div className="space-y-1">
+              <p className="text-amber-200 text-sm leading-relaxed">
+                Dein Energie-/Schlaflevel ist niedrig. Wir empfehlen ein reduziertes Trainingsvolumen heute.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 min-h-[40px] border-amber-500/40 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg"
+                onClick={() => router.push("/training")}
+              >
+                Plan anpassen
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {whoopDataAvailable && !showSchlafWarning && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex gap-3 items-start">
+            <span className="material-symbols-outlined text-green-500 shrink-0">check_circle</span>
+            <p className="text-green-400 text-sm leading-relaxed">
+              Daten (Recovery: {whoopDetails.recovery}%) von WHOOP importiert!
+            </p>
+          </div>
+        )}
+
+        {/* Dynamic Metric Sections */}
+        {METRICS.map((m) => (
+          <section key={m.key} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", m.bgClass, m.colorClass)}>
+                  <span className="material-symbols-outlined">{m.icon}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={24}
-                    step={0.5}
-                    value={form.schlafStunden}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        schlafStunden: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                    className="w-24 min-h-[48px] text-center text-lg font-semibold"
-                  />
-                  <span className="text-muted-foreground text-sm">Stunden</span>
-                </div>
+                <h2 className="text-lg font-semibold">{m.label}</h2>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-end gap-1 h-6">
+                {[1, 2, 3, 4, 5, 6, 7].map((bar, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "w-1 rounded-full",
+                      i % 2 === 0 ? "h-3" : i % 3 === 0 ? "h-5" : "h-1",
+                      form[m.key] >= Math.ceil(i / 1.5) ? m.bgClass.replace('/20', '') : m.bgClass.replace('/10', '/30')
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
 
-          {/* Ratings */}
-          <Card>
-            <CardContent className="p-4 space-y-6">
-              {METRICS.map((m) => (
-                <RatingSelector
-                  key={m.key}
-                  value={form[m.key]}
-                  onChange={(v) => setForm((f) => ({ ...f, [m.key]: v }))}
-                  label={m.label}
-                  icon={m.icon}
-                />
-              ))}
-            </CardContent>
-          </Card>
+            <p className="text-slate-400 text-sm">
+              {m.key === "schlafQualitaet" && "Wie hast du geschlafen?"}
+              {m.key === "energie" && "Wie ist dein Energielevel?"}
+              {m.key === "stress" && "Wie gestresst fühlst du dich?"}
+              {m.key === "muskelkater" && "Hast du heute Muskelkater?"}
+              {m.key === "stimmung" && "Wie ist deine Stimmung?"}
+            </p>
 
-          {/* Schlaf-Impact Warning */}
-          {showSchlafWarning && (
-            <Card className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                      Schlaf-Impact erkannt
-                    </p>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 leading-relaxed">
-                      Basierend auf deinem Schlaf/Energie-Level empfehlen wir
-                      heute ein reduziertes Trainingsvolumen (60-70%). Moechtest
-                      du den heutigen Plan anpassen?
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="min-h-[48px] border-yellow-500 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
-                      onClick={() => router.push("/training")}
-                    >
-                      Plan anpassen
-                    </Button>
+            <div className="flex justify-between items-center gap-2">
+              {[1, 2, 3, 4, 5].map((val) => (
+                <label key={val} className="relative flex-1 group cursor-pointer">
+                  <input
+                    type="radio"
+                    name={m.key}
+                    className="peer hidden"
+                    checked={form[m.key] === val}
+                    onChange={() => setForm(f => ({ ...f, [m.key]: val }))}
+                  />
+                  <div className={cn(
+                    "h-12 flex items-center justify-center rounded-xl bg-slate-800 border-2 border-transparent transition-all",
+                    m.activeClass.split(" ").map(c => `peer-checked:${c}`).join(" ")
+                  )}>
+                    <span className="text-lg font-bold group-hover:scale-110 transition-transform">{val}</span>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </label>
+              ))}
+            </div>
+            {m.key === "schlafQualitaet" && (
+              <div className="flex justify-between text-[10px] uppercase tracking-widest text-slate-500 font-bold px-1">
+                <span>Sehr schlecht</span>
+                <span>Sehr gut</span>
+              </div>
+            )}
+          </section>
+        ))}
 
-          {/* Notes */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <Label className="text-sm font-medium">Notizen (optional)</Label>
-              <Textarea
-                value={form.notiz}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, notiz: e.target.value }))
-                }
-                placeholder="Wie fuehlt sich dein Koerper heute an?"
-                className="min-h-[80px] resize-none"
+        {/* Numeric Inputs */}
+        <section className="grid grid-cols-1 gap-6 pt-4">
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Schlafstunden</label>
+            <div className="relative flex items-center">
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="24"
+                value={form.schlafStunden}
+                onChange={(e) => setForm((f) => ({ ...f, schlafStunden: parseFloat(e.target.value) || 0 }))}
+                className="w-full bg-slate-800 border-none rounded-xl h-14 px-4 text-xl font-bold text-slate-100 focus:ring-2 focus:ring-primary focus:outline-none"
               />
-            </CardContent>
-          </Card>
+              <div className="absolute right-4 text-slate-500 font-medium">Std</div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Notiz (optional)</label>
+            <textarea
+              value={form.notiz}
+              onChange={(e) => setForm(f => ({ ...f, notiz: e.target.value }))}
+              className="w-full bg-slate-800 border-none rounded-xl p-4 text-base focus:ring-2 focus:ring-primary h-32 resize-none focus:outline-none placeholder-slate-600"
+              placeholder="Wie fühlst du dich heute sonst noch?"
+            />
+          </div>
+        </section>
 
-          {/* WissenschaftSnippet */}
+        {/* WissenschaftSnippet & Last 7 days */}
+        <div className="pt-4 pb-8 space-y-8">
           <WissenschaftSnippet titel="Warum Schlaf so wichtig ist">
             Schlaf ist der wichtigste Regenerationsfaktor. Bei weniger als 6
             Stunden Schlaf sinkt die Muskelproteinsynthese um 18% und das
-            Verletzungsrisiko steigt um 60%. Fuer optimale Regeneration und
-            Muskelaufbau sollten Maenner ueber 50 mindestens 7-8 Stunden
+            Verletzungsrisiko steigt um 60%. Für optimale Regeneration und
+            Muskelaufbau sollten Männer über 50 mindestens 7-8 Stunden
             qualitativ hochwertigen Schlaf anstreben.
           </WissenschaftSnippet>
 
-          {/* Last 7 days sparklines */}
           {last7Days.length >= 2 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Letzte 7 Tage</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
+            <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-4">Letzte 7 Tage</h3>
+              <div className="space-y-4">
                 {METRICS.map((m) => (
-                  <div
-                    key={m.key}
-                    className="flex items-center justify-between"
-                  >
+                  <div key={m.key} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <m.icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{m.label}</span>
+                      <span className={cn("material-symbols-outlined text-sm", m.colorClass)}>{m.icon}</span>
+                      <span className="text-sm font-medium text-slate-300">{m.label}</span>
                     </div>
-                    <Sparkline
-                      data={last7Days}
-                      dataKey={m.key}
-                      color={m.color}
-                    />
+                    <Sparkline data={last7Days} dataKey={m.key} color={m.sparkColor} />
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
+        </div>
+      </main>
 
-          {/* Save Button */}
-          <Button
+      {/* Fixed Footer Area */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto">
+        <div className="p-6 bg-gradient-to-t from-[#101622] via-[#101622] to-transparent">
+          <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full min-h-[52px] text-base font-semibold"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] uppercase tracking-widest text-sm"
           >
-            {saving ? (
-              "Speichern..."
-            ) : (
-              <span className="flex items-center gap-2">
-                <Check className="h-5 w-5" />
-                Speichern
-              </span>
-            )}
-          </Button>
+            {saving ? "Wird gespeichert..." : "Speichern"}
+          </button>
         </div>
-      </PageContainer>
-    </>
+      </div>
+    </div>
   );
 }

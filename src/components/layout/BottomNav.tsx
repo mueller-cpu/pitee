@@ -26,7 +26,7 @@ export default function BottomNav() {
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
-        "bg-background border-t border-border",
+        "bg-background/80 backdrop-blur-xl border-t border-border/50",
         "pb-[max(env(safe-area-inset-bottom),24px)] pt-2"
       )}
     >
@@ -41,15 +41,22 @@ export default function BottomNav() {
               href={path}
               className={cn(
                 "flex flex-col items-center justify-center gap-1",
-                "min-h-[48px] min-w-[48px] px-2 py-2",
-                "text-muted-foreground transition-colors",
+                "min-h-[48px] min-w-[48px] px-2 py-1",
+                "text-muted-foreground transition-all duration-200",
                 isActive && "text-primary"
               )}
             >
-              <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
+              <div
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200",
+                  isActive && "bg-primary/15"
+                )}
+              >
+                <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 1.8} />
+              </div>
               <span
                 className={cn(
-                  "text-[11px] leading-tight",
+                  "text-[10px] leading-tight tracking-wide",
                   isActive ? "font-semibold" : "font-medium"
                 )}
               >
@@ -62,3 +69,4 @@ export default function BottomNav() {
     </nav>
   );
 }
+

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-lexend);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,88 +52,215 @@
 }
 
 :root {
-  --radius: 0.5rem;
-  /* McFit Design – Energetisch, Sportlich, Gelb-Magenta-Schwarz */
-  --background: oklch(0.98 0 0);
+  --radius: 0.75rem;
+  /* pitee Design – Neon Green / Cyan / Premium Dark */
+  --background: oklch(0.97 0.005 155);
   --foreground: oklch(0.15 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.92 0.25 102);        /* McFit Gelb #FFFF00 */
-  --primary-foreground: oklch(0.15 0 0);  /* Schwarz auf Gelb */
-  --secondary: oklch(0.2 0 0);            /* Dunkelgrau/Schwarz */
-  --secondary-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.75 0.2 155);
+  /* Neon Green */
+  --primary-foreground: oklch(0.1 0 0);
+  /* Schwarz auf Grün */
+  --secondary: oklch(0.93 0.005 155);
+  --secondary-foreground: oklch(0.2 0 0);
   --muted: oklch(0.94 0 0);
   --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.65 0.28 340);         /* Magenta/Pink */
-  --accent-foreground: oklch(0.98 0 0);
+  --accent: oklch(0.72 0.12 200);
+  /* Cyan/Teal */
+  --accent-foreground: oklch(0.1 0 0);
   --destructive: oklch(0.55 0.22 25);
-  --border: oklch(0.88 0 0);
-  --input: oklch(0.88 0 0);
-  --ring: oklch(0.92 0.25 102);          /* Gelb Ring */
-  --success: oklch(0.55 0.18 145);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.75 0.15 75);
-  --warning-foreground: oklch(0.2 0 0);
-  --chart-1: oklch(0.92 0.25 102);       /* Gelb */
-  --chart-2: oklch(0.65 0.28 340);       /* Magenta */
-  --chart-3: oklch(0.2 0 0);             /* Schwarz */
-  --chart-4: oklch(0.55 0.22 25);
-  --chart-5: oklch(0.55 0.18 145);
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.92 0.25 102);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.65 0.28 340);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.92 0.25 102);
-}
-
-.dark {
-  /* McFit Dark Mode – Schwarz mit Gelb/Magenta Akzenten */
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.16 0 0);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.16 0 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.92 0.25 102);       /* McFit Gelb */
-  --primary-foreground: oklch(0.12 0 0); /* Schwarz auf Gelb */
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.65 0.28 340);        /* Magenta */
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.65 0.2 22);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.25 0 0);
-  --ring: oklch(0.92 0.25 102);
+  --border: oklch(0.88 0.005 155);
+  --input: oklch(0.88 0.005 155);
+  --ring: oklch(0.75 0.2 155);
+  /* Green Ring */
   --success: oklch(0.6 0.18 145);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.8 0.15 75);
-  --warning-foreground: oklch(0.15 0 0);
-  --chart-1: oklch(0.92 0.25 102);       /* Gelb */
-  --chart-2: oklch(0.65 0.28 340);       /* Magenta */
-  --chart-3: oklch(0.4 0 0);             /* Grau */
-  --chart-4: oklch(0.65 0.2 22);
+  --warning-foreground: oklch(0.2 0 0);
+  --chart-1: oklch(0.75 0.2 155);
+  /* Green */
+  --chart-2: oklch(0.72 0.12 200);
+  /* Cyan */
+  --chart-3: oklch(0.65 0.18 300);
+  /* Purple */
+  --chart-4: oklch(0.8 0.15 75);
+  /* Yellow/Orange */
   --chart-5: oklch(0.6 0.18 145);
-  --sidebar: oklch(0.14 0 0);
+  --sidebar: oklch(0.97 0.005 155);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.75 0.2 155);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+  --sidebar-accent: oklch(0.72 0.12 200);
+  --sidebar-accent-foreground: oklch(0.1 0 0);
+  --sidebar-border: oklch(0.88 0.005 155);
+  --sidebar-ring: oklch(0.75 0.2 155);
+}
+
+.dark {
+  /* pitee Dark Mode – Deep Black mit Neon Green/Cyan Akzenten */
+  --background: oklch(0.08 0 0);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.13 0.005 155);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.13 0.005 155);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.78 0.22 155);
+  /* Neon Green (leuchtkräftig im Dark Mode) */
+  --primary-foreground: oklch(0.08 0 0);
+  /* Schwarz auf Grün */
+  --secondary: oklch(0.18 0.005 155);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  --accent: oklch(0.75 0.13 200);
+  /* Cyan/Teal */
+  --accent-foreground: oklch(0.08 0 0);
+  --destructive: oklch(0.65 0.2 22);
+  --border: oklch(0.22 0.005 155);
+  --input: oklch(0.22 0.005 155);
+  --ring: oklch(0.78 0.22 155);
+  --success: oklch(0.65 0.18 145);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.85 0.15 75);
+  --warning-foreground: oklch(0.12 0 0);
+  --chart-1: oklch(0.78 0.22 155);
+  /* Green */
+  --chart-2: oklch(0.75 0.13 200);
+  /* Cyan */
+  --chart-3: oklch(0.7 0.18 300);
+  /* Purple */
+  --chart-4: oklch(0.85 0.15 75);
+  /* Yellow/Orange */
+  --chart-5: oklch(0.65 0.18 145);
+  --sidebar: oklch(0.1 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.92 0.25 102);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.65 0.28 340);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.92 0.25 102);
+  --sidebar-primary: oklch(0.78 0.22 155);
+  --sidebar-primary-foreground: oklch(0.08 0 0);
+  --sidebar-accent: oklch(0.75 0.13 200);
+  --sidebar-accent-foreground: oklch(0.08 0 0);
+  --sidebar-border: oklch(0.22 0.005 155);
+  --sidebar-ring: oklch(0.78 0.22 155);
+}
+
+@layer utilities {
+  .glass-nav {
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .text-neon {
+    color: var(--primary);
+    text-shadow: 0 0 20px rgba(120, 255, 0, 0.3);
+  }
+
+  .gradient-blue {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  }
+
+  .gradient-green {
+    background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
+  }
+
+  .gradient-red {
+    background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%);
+  }
+
+  .gradient-orange {
+    background: linear-gradient(135deg, #9a3412 0%, #f97316 100%);
+  }
+
+  .gradient-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  }
+
+  /* Progress Analytics Classes */
+  .chart-glow-blue {
+    filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.4));
+  }
+
+  .chart-glow-green {
+    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.4));
+  }
+
+  .chart-glow-purple {
+    filter: drop-shadow(0 0 8px rgba(188, 19, 254, 0.4));
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .grid-line {
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 1;
+  }
+
+  /* Nutrition Classes */
+  .leucin-glow-active {
+    box-shadow: 0 0 20px rgba(0, 245, 255, 0.4), inset 0 0 10px rgba(0, 245, 255, 0.2);
+  }
+
+  .zap-neon {
+    color: #CCFF00;
+    filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.6));
+  }
+
+  .glass-header {
+    background: rgba(5, 5, 5, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Coach Classes */
+  .chip-glow {
+    box-shadow: 0 0 15px rgba(0, 245, 255, 0.15);
+  }
+
+  .user-bubble-shadow {
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+  }
+
+  .ai-icon-neon {
+    text-shadow: 0 0 8px currentColor;
+  }
+
+  .bg-user-bubble {
+    background-color: #2563EB;
+  }
+
+  /* Profile Classes */
+  .neon-glow {
+    box-shadow: 0 0 15px rgba(204, 255, 0, 0.3);
+  }
+
+  .rank-gradient {
+    background: linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
+  }
+
+  .avatar-border {
+    background: linear-gradient(180deg, #CCFF00 0%, #00FFC2 100%);
+  }
+
+  .input-focus-glow:focus {
+    box-shadow: 0 0 0 2px rgba(204, 255, 0, 0.2);
+    border-color: #CCFF00;
+  }
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-size: 16px;
@@ -140,12 +268,21 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
   /* Mindestens 48px Touch-Targets */
-  button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
     min-height: 48px;
     min-width: 48px;
   }
-  input, textarea, select {
-    font-size: 16px; /* Verhindert Zoom auf iOS */
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+    /* Verhindert Zoom auf iOS */
   }
 }
