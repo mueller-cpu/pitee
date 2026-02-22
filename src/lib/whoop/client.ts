@@ -174,6 +174,11 @@ export class WhoopClient {
       }
     );
 
+    // 404 means no data available - this is ok, return empty array
+    if (response.status === 404) {
+      return [];
+    }
+
     if (!response.ok) {
       throw new Error(`WHOOP cycles fetch failed: ${response.statusText}`);
     }
@@ -198,6 +203,11 @@ export class WhoopClient {
       }
     );
 
+    // 404 means no data available - this is ok, return empty array
+    if (response.status === 404) {
+      return [];
+    }
+
     if (!response.ok) {
       throw new Error(`WHOOP recovery fetch failed: ${response.statusText}`);
     }
@@ -221,6 +231,11 @@ export class WhoopClient {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
+
+    // 404 means no data available - this is ok, return empty array
+    if (response.status === 404) {
+      return [];
+    }
 
     if (!response.ok) {
       throw new Error(`WHOOP sleep fetch failed: ${response.statusText}`);
