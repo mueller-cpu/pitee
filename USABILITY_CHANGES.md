@@ -15,22 +15,24 @@
 - [x] 24px+ Padding bottom hinzugefügt (zusätzlich zu safe-area-inset)
 - [x] pt-2 für bessere Touch-Targets
 
-## 🚧 In Arbeit:
+## ✅ Bereits umgesetzt (Phase 2):
 
 ### Profil
-- [ ] Alle Körperdaten pre-fillen aus letztem BodyMetric
-- [ ] Geschlecht anzeigen und editierbar machen
+- [x] Alle Körperdaten pre-fillen aus letztem BodyMetric
+- [x] Geschlecht anzeigen
+- [x] Dark Mode Toggle Styling optimiert
+- [ ] Geschlecht editierbar machen
 - [ ] Trainingseinstellungen editierbar
-- [ ] Dark Mode Toggle Styling optimieren
 
 ### Fortschritt
-- [ ] Subnavi (Kraft, Körper, Volumen, Wellness) größere Touch-Targets
+- [x] Subnavi (Kraft, Körper, Volumen, Wellness) größere Touch-Targets
 
 ### WHOOP Integration
-- [ ] Schlafstunden automatisch in Wellness Check-In ziehen
-- [ ] Recovery Score für Trainingsempfehlungen nutzen
+- [x] Schlafstunden automatisch in Wellness Check-In ziehen
+- [x] Recovery Score für Trainingsempfehlungen nutzen
+- [x] Dashboard Recovery Widget mit allen Metriken
 - [ ] HRV-Trend im Fortschritt anzeigen
-- [ ] Strain-basierte Volumen-Anpassung
+- [ ] Strain-basierte Volumen-Anpassung (teilweise - Recovery-basiert)
 
 ## 💡 WHOOP Nutzungs-Vorschlag:
 

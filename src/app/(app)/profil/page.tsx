@@ -9,7 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Scale, Ruler, LogOut, Dumbbell, Save, Sun, Moon, Watch, RefreshCw, Unlink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { User, Scale, Ruler, LogOut, Dumbbell, Save, Sun, Moon, Watch, RefreshCw, Unlink, UtensilsCrossed, Pencil } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -28,6 +43,8 @@ interface UserData {
     erfahrung: string;
     hauptziel: string;
     trainingstagePW: number;
+    anzahlMahlzeiten: number;
+    ernaehrungsweise: string;
   };
 }
 
@@ -54,6 +71,12 @@ const ZIEL_LABELS: Record<string, string> = {
   kraft: "Kraft",
   fettabbau: "Fettabbau",
   gesundheit: "Allgemeine Gesundheit",
+};
+
+const ERNAEHRUNGSWEISE_LABELS: Record<string, string> = {
+  omnivor: "Alles (Omnivor)",
+  vegetarisch: "Vegetarisch",
+  vegan: "Vegan",
 };
 
 // ── Metric Input Row ──
@@ -105,6 +128,14 @@ export default function ProfilPage() {
   const [whoopConnecting, setWhoopConnecting] = useState(false);
   const { theme, setTheme } = useTheme();
 
+  // Ernährungseinstellungen Dialog
+  const [ernaehrungDialogOpen, setErnaehrungDialogOpen] = useState(false);
+  const [ernaehrungForm, setErnaehrungForm] = useState({
+    anzahlMahlzeiten: 4,
+    ernaehrungsweise: "omnivor",
+  });
+  const [savingErnaehrung, setSavingErnaehrung] = useState(false);
+
   const [koerperForm, setKoerperForm] = useState<KoerperForm>({
     gewicht: "",
     koerperfett: "",
@@ -126,6 +157,13 @@ export default function ProfilPage() {
       })
       .then((data) => {
         setUser(data);
+        // Initialize Ernährungseinstellungen form
+        if (data.profile) {
+          setErnaehrungForm({
+            anzahlMahlzeiten: data.profile.anzahlMahlzeiten || 4,
+            ernaehrungsweise: data.profile.ernaehrungsweise || "omnivor",
+          });
+        }
       })
       .catch((err) => console.error("Profile fetch error:", err))
       .finally(() => setLoading(false));
@@ -149,22 +187,27 @@ export default function ProfilPage() {
       .catch((err) => console.error("Last body metrics error:", err));
 
     // Check WHOOP connection status
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then(() => {
-        // Check if WHOOP is connected (we'll create this endpoint)
-        return fetch("/api/whoop/status");
+    fetch("/api/whoop/status")
+      .then((res) => {
+        if (!res.ok) {
+          console.error("WHOOP status check failed:", res.status);
+          return { connected: false };
+        }
+        return res.json();
       })
-      .then((res) => res.json())
       .then((data) => {
+        console.log("WHOOP status:", data);
         setWhoopConnected(data.connected || false);
       })
-      .catch((err) => console.error("WHOOP status error:", err));
+      .catch((err) => {
+        console.error("WHOOP status error:", err);
+        setWhoopConnected(false);
+      });
 
     // Check URL params for WHOOP callback
     const params = new URLSearchParams(window.location.search);
     if (params.get("whoop_connected") === "true") {
-      toast.success("WHOOP erfolgreich verbunden!");
+      toast.success("WHOOP erfolgreich verbunden und synchronisiert!");
       setWhoopConnected(true);
       // Clean up URL
       window.history.replaceState({}, "", "/profil");
@@ -256,13 +299,61 @@ export default function ProfilPage() {
       const res = await fetch("/api/whoop/sync", { method: "POST" });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Sync failed");
+      console.log("WHOOP sync response:", data);
 
-      toast.success(data.message || "WHOOP-Daten synchronisiert");
+      if (!res.ok) {
+        throw new Error(data.error || "Sync failed");
+      }
+
+      if (data.daysSync > 0) {
+        toast.success(`${data.daysSync} Tage synchronisiert`);
+      } else {
+        toast.info("Keine neuen Daten verfügbar");
+      }
     } catch (err) {
-      toast.error("Fehler beim Synchronisieren");
+      console.error("WHOOP sync error:", err);
+      toast.error(err instanceof Error ? err.message : "Fehler beim Synchronisieren");
     } finally {
       setWhoopSyncing(false);
+    }
+  };
+
+  const handleSaveErnaehrungseinstellungen = async () => {
+    setSavingErnaehrung(true);
+    try {
+      const res = await fetch("/api/profil/ernaehrungseinstellungen", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ernaehrungForm),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Save failed");
+
+      // Update local user state
+      setUser((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          profile: prev.profile
+            ? {
+                ...prev.profile,
+                anzahlMahlzeiten: data.anzahlMahlzeiten,
+                ernaehrungsweise: data.ernaehrungsweise,
+              }
+            : prev.profile,
+        };
+      });
+
+      toast.success("Ernährungseinstellungen gespeichert!");
+      setErnaehrungDialogOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Fehler beim Speichern.";
+      toast.error(message);
+    } finally {
+      setSavingErnaehrung(false);
     }
   };
 
@@ -468,6 +559,48 @@ export default function ProfilPage() {
             </Card>
           )}
 
+          {/* Ernährungseinstellungen */}
+          {user.profile && (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <UtensilsCrossed className="h-5 w-5" />
+                    Ernährungseinstellungen
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setErnaehrungDialogOpen(true)}
+                    className="h-9 w-9 p-0"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-3">
+                <div className="flex justify-between items-center min-h-[48px]">
+                  <span className="text-sm text-muted-foreground">Mahlzeiten pro Tag</span>
+                  <span className="text-sm font-medium">
+                    {user.profile.anzahlMahlzeiten}x
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center min-h-[48px]">
+                  <span className="text-sm text-muted-foreground">Ernährungsweise</span>
+                  <span className="text-sm font-medium">
+                    {ERNAEHRUNGSWEISE_LABELS[user.profile.ernaehrungsweise] || user.profile.ernaehrungsweise}
+                  </span>
+                </div>
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <strong>Hinweis:</strong> Diese Einstellungen werden bei der KI-Generierung von Ernährungsplänen berücksichtigt.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* WHOOP Integration */}
           <Card>
             <CardHeader className="pb-3">
@@ -572,6 +705,100 @@ export default function ProfilPage() {
             )}
           </Button>
         </div>
+
+        {/* Ernährungseinstellungen Dialog */}
+        <Dialog open={ernaehrungDialogOpen} onOpenChange={setErnaehrungDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ernährungseinstellungen bearbeiten</DialogTitle>
+              <DialogDescription>
+                Diese Einstellungen werden bei der Generierung deiner Ernährungspläne berücksichtigt.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 py-4">
+              {/* Anzahl Mahlzeiten */}
+              <div className="space-y-2">
+                <Label htmlFor="anzahlMahlzeiten" className="text-sm font-medium">
+                  Mahlzeiten pro Tag
+                </Label>
+                <Select
+                  value={String(ernaehrungForm.anzahlMahlzeiten)}
+                  onValueChange={(value) =>
+                    setErnaehrungForm((f) => ({
+                      ...f,
+                      anzahlMahlzeiten: parseInt(value),
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-full min-h-[48px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 Mahlzeiten</SelectItem>
+                    <SelectItem value="4">4 Mahlzeiten</SelectItem>
+                    <SelectItem value="5">5 Mahlzeiten</SelectItem>
+                    <SelectItem value="6">6 Mahlzeiten</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Wähle die Anzahl, die zu deinem Tagesablauf passt.
+                </p>
+              </div>
+
+              {/* Ernährungsweise */}
+              <div className="space-y-2">
+                <Label htmlFor="ernaehrungsweise" className="text-sm font-medium">
+                  Ernährungsweise
+                </Label>
+                <Select
+                  value={ernaehrungForm.ernaehrungsweise}
+                  onValueChange={(value) =>
+                    setErnaehrungForm((f) => ({ ...f, ernaehrungsweise: value }))
+                  }
+                >
+                  <SelectTrigger className="w-full min-h-[48px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="omnivor">
+                      Alles (Omnivor)
+                    </SelectItem>
+                    <SelectItem value="vegetarisch">
+                      Vegetarisch
+                    </SelectItem>
+                    <SelectItem value="vegan">Vegan</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {ernaehrungForm.ernaehrungsweise === "vegetarisch" &&
+                    "Kein Fleisch oder Fisch, aber Eier und Milchprodukte."}
+                  {ernaehrungForm.ernaehrungsweise === "vegan" &&
+                    "Keine tierischen Produkte. B12-Supplementierung wird empfohlen."}
+                  {ernaehrungForm.ernaehrungsweise === "omnivor" &&
+                    "Alle Lebensmittel sind erlaubt."}
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setErnaehrungDialogOpen(false)}
+                className="min-h-[48px]"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                onClick={handleSaveErnaehrungseinstellungen}
+                disabled={savingErnaehrung}
+                className="min-h-[48px]"
+              >
+                {savingErnaehrung ? "Speichern..." : "Speichern"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </PageContainer>
     </>
   );

@@ -10,6 +10,9 @@ import {
   Loader2,
   Sparkles,
   Calendar,
+  Activity,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import PageContainer from "@/components/layout/PageContainer";
@@ -37,6 +40,14 @@ interface TrainingPlan {
   startDatum: string;
   endDatum: string;
   einheiten: Einheit[];
+}
+
+interface WhoopData {
+  whoopRecovery: number;
+  whoopStrain: number | null;
+  whoopHRV: number | null;
+  whoopRestingHR: number | null;
+  schlafStunden: number;
 }
 
 const WOCHENTAGE = [
@@ -70,10 +81,25 @@ export default function TrainingPage() {
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [whoopData, setWhoopData] = useState<WhoopData | null>(null);
 
   useEffect(() => {
     fetchPlan();
+    fetchWhoopData();
   }, []);
+
+  async function fetchWhoopData() {
+    try {
+      const res = await fetch("/api/wellness/save");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.whoopData) {
+        setWhoopData(data.whoopData);
+      }
+    } catch (err) {
+      console.error("WHOOP fetch error:", err);
+    }
+  }
 
   async function fetchPlan() {
     try {
@@ -216,6 +242,73 @@ export default function TrainingPage() {
               </span>
             </div>
           </div>
+
+          {/* WHOOP Recovery Recommendation */}
+          {whoopData && (
+            <>
+              {whoopData.whoopRecovery < 34 && (
+                <Card className="border-red-500/50 bg-red-50 dark:bg-red-950/20">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                            Niedrige Recovery: {whoopData.whoopRecovery}%
+                          </p>
+                          <Activity className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        </div>
+                        <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
+                          Dein Körper braucht mehr Erholung. Wir empfehlen heute ein reduziertes Trainingsvolumen (60-70%) oder einen Ruhetag. Dein Schlaf: {whoopData.schlafStunden}h
+                          {whoopData.whoopHRV && `, HRV: ${whoopData.whoopHRV}ms`}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {whoopData.whoopRecovery >= 34 && whoopData.whoopRecovery < 67 && (
+                <Card className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            Mittlere Recovery: {whoopData.whoopRecovery}%
+                          </p>
+                          <Activity className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                        </div>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 leading-relaxed">
+                          Dein Körper ist teilweise erholt. Heute empfehlen wir 70-85% Volumen oder moderate Intensität. Achte auf dein Körpergefühl.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {whoopData.whoopRecovery >= 67 && (
+                <Card className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                            Optimal erholt: {whoopData.whoopRecovery}%
+                          </p>
+                          <Activity className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                          Perfekt! Du bist optimal erholt und bereit für dein volles Training.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
 
           {/* Einheiten list */}
           <div className="space-y-3">

@@ -43,6 +43,7 @@ export async function buildUserContext(userId: string): Promise<string> {
     const p = user.profile;
     sections.push(`## Persönliche Daten
 - Name: ${user.name}
+- Geschlecht: ${p.geschlecht === "weiblich" ? "Weiblich" : "Männlich"}
 - Alter: ${p.alter} Jahre
 - Gewicht: ${p.gewicht} kg
 - Größe: ${p.groesse} cm
@@ -184,14 +185,18 @@ export async function buildNutritionContext(userId: string): Promise<string> {
   // ── Persönliche Daten ──
   if (user.profile) {
     const p = user.profile;
+    const ernaehrungsweiseLabel = p.ernaehrungsweise === "vegetarisch" ? "Vegetarisch (kein Fleisch/Fisch)" : p.ernaehrungsweise === "vegan" ? "Vegan (keine tierischen Produkte)" : "Omnivor (alles)";
     sections.push(`## Persönliche Daten
 - Name: ${user.name}
+- Geschlecht: ${p.geschlecht === "weiblich" ? "Weiblich" : "Männlich"}
 - Alter: ${p.alter} Jahre
 - Gewicht: ${p.gewicht} kg
 - Größe: ${p.groesse} cm
 - BMI: ${p.bmi ?? "nicht berechnet"}
 - Hauptziel: ${p.hauptziel}
-- Trainingstage pro Woche: ${p.trainingstagePW}`);
+- Trainingstage pro Woche: ${p.trainingstagePW}
+- Mahlzeiten pro Tag: ${p.anzahlMahlzeiten ?? 4}
+- Ernährungsweise: ${ernaehrungsweiseLabel}`);
   }
 
   // ── Gesundheitsprofil ──

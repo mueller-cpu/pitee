@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateStreamingCompletion } from "@/lib/ai/claude-client";
-import { COACHING_CHAT_SYSTEM_PROMPT } from "@/lib/ai/system-prompts";
+import { getCoachingChatSystemPrompt } from "@/lib/ai/system-prompts";
 import { buildChatContext } from "@/lib/ai/context-builder";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -89,6 +89,14 @@ export async function POST(request: NextRequest) {
       data: { updatedAt: new Date() },
     });
 
+    // Get gender-specific system prompt
+    const userProfile = await prisma.userProfile.findUnique({
+      where: { userId: user.id },
+      select: { geschlecht: true },
+    });
+    const geschlecht = userProfile?.geschlecht === "weiblich" ? "weiblich" : "maennlich";
+    const baseSystemPrompt = getCoachingChatSystemPrompt(geschlecht);
+
     // Build context
     const chatContext = await buildChatContext(user.id);
 
@@ -108,7 +116,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Build system prompt with user context
-    const systemPrompt = `${COACHING_CHAT_SYSTEM_PROMPT}
+    const systemPrompt = `${baseSystemPrompt}
 
 ## Aktueller Nutzer-Kontext
 

@@ -113,6 +113,36 @@ export async function GET() {
       },
     });
 
+    // Check if WHOOP is connected and has data for today
+    let whoopData = null;
+    const whoopConnection = await prisma.wearableConnection.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (whoopConnection && whoopConnection.isActive && whoopConnection.provider === "whoop") {
+      // Check if we have WHOOP-synced data for today
+      const whoopTodayLog = await prisma.wellnessLog.findFirst({
+        where: {
+          userId: user.id,
+          datum: { gte: heute, lt: morgen },
+          whoopSyncedAt: { not: null },
+        },
+      });
+
+      if (whoopTodayLog) {
+        whoopData = {
+          schlafStunden: whoopTodayLog.schlafStunden,
+          schlafQualitaet: whoopTodayLog.schlafQualitaet,
+          energie: whoopTodayLog.energie,
+          whoopRecovery: whoopTodayLog.whoopRecovery,
+          whoopStrain: whoopTodayLog.whoopStrain,
+          whoopHRV: whoopTodayLog.whoopHRV,
+          whoopRestingHR: whoopTodayLog.whoopRestingHR,
+          whoopSyncedAt: whoopTodayLog.whoopSyncedAt,
+        };
+      }
+    }
+
     return NextResponse.json({
       logs: logs.map((l) => ({
         ...l,
@@ -121,6 +151,8 @@ export async function GET() {
       todayLog: todayLog
         ? { ...todayLog, datum: todayLog.datum.toISOString().split("T")[0] }
         : null,
+      whoopData, // Include WHOOP data if available
+      whoopConnected: !!whoopConnection && whoopConnection.isActive,
     });
   } catch (error) {
     console.error("Wellness GET error:", error);

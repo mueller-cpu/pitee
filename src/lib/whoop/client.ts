@@ -115,14 +115,13 @@ export class WhoopClient {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${Buffer.from(
-          `${this.clientId}:${this.clientSecret}`
-        ).toString("base64")}`,
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
         redirect_uri: this.redirectUri,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
       }),
     });
 
@@ -142,13 +141,12 @@ export class WhoopClient {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${Buffer.from(
-          `${this.clientId}:${this.clientSecret}`
-        ).toString("base64")}`,
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
         refresh_token: refreshToken,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
       }),
     });
 

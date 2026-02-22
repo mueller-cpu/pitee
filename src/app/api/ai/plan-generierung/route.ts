@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateCompletion } from "@/lib/ai/claude-client";
-import { TRAINING_PLAN_SYSTEM_PROMPT } from "@/lib/ai/system-prompts";
+import { getTrainingPlanSystemPrompt } from "@/lib/ai/system-prompts";
 import { buildUserContext } from "@/lib/ai/context-builder";
 import {
   parseTrainingPlanResponse,
@@ -27,6 +27,10 @@ export async function POST() {
       );
     }
 
+    // Get gender-specific system prompt
+    const geschlecht = user.profile.geschlecht === "weiblich" ? "weiblich" : "maennlich";
+    const systemPrompt = getTrainingPlanSystemPrompt(geschlecht);
+
     // Build user context
     const userContext = await buildUserContext(user.id);
 
@@ -36,11 +40,11 @@ export async function POST() {
 ${userContext}
 
 Erstelle einen ${user.profile.trainingstagePW}-Tage-Trainingsplan (pro Woche) für das Ziel "${user.profile.hauptziel}".
-Berücksichtige alle Gelenkprobleme und das Fitnesslevel bei der Übungsauswahl.`;
+Berücksichtige alle Gelenkprobleme und das Fitnesslevel bei der Übungsauswahl.${geschlecht === "weiblich" ? "\nWICHTIG: Berücksichtige die Menopause-spezifischen Anforderungen für Frauen 50+ (Osteoporose-Prävention, Beckenboden-Training, Gelenkschutz)." : ""}`;
 
     // Call Claude
     const rawResponse = await generateCompletion(
-      TRAINING_PLAN_SYSTEM_PROMPT,
+      systemPrompt,
       userMessage,
       4096
     );

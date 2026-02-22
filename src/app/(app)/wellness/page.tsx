@@ -142,6 +142,7 @@ export default function WellnessPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [last7Days, setLast7Days] = useState<WellnessLog[]>([]);
+  const [whoopDataAvailable, setWhoopDataAvailable] = useState(false);
   const [form, setForm] = useState<WellnessFormData>({
     schlafStunden: 7,
     schlafQualitaet: 3,
@@ -164,8 +165,35 @@ export default function WellnessPage() {
       .then((data) => {
         setLast7Days(data.logs || []);
 
-        // Pre-fill form if today's log exists
-        if (data.todayLog) {
+        // Priority 1: Use WHOOP data if available and no manual log exists
+        if (data.whoopData && !data.todayLog) {
+          setWhoopDataAvailable(true);
+          const recovery = data.whoopData.whoopRecovery;
+          const hrv = data.whoopData.whoopHRV;
+
+          // Map WHOOP Recovery (0-100%) to schlafQualitaet (1-5)
+          const qualityFromRecovery = recovery
+            ? Math.min(5, Math.max(1, Math.round((recovery / 100) * 5)))
+            : 3;
+
+          // Map WHOOP Recovery to energie (1-5)
+          const energieFromRecovery = recovery
+            ? Math.min(5, Math.max(1, Math.round((recovery / 100) * 5)))
+            : 3;
+
+          setForm({
+            schlafStunden: data.whoopData.schlafStunden ?? 7,
+            schlafQualitaet: qualityFromRecovery,
+            energie: energieFromRecovery,
+            stress: 3, // WHOOP doesn't track stress
+            muskelkater: 3, // WHOOP doesn't track muskelkater
+            stimmung: 3, // WHOOP doesn't track stimmung
+            notiz: `Von WHOOP importiert (Recovery: ${recovery}%${hrv ? `, HRV: ${hrv}ms` : ""})`,
+          });
+        }
+        // Priority 2: Use today's manually entered log
+        else if (data.todayLog) {
+          setWhoopDataAvailable(false);
           setForm({
             schlafStunden: data.todayLog.schlafStunden ?? 7,
             schlafQualitaet: data.todayLog.schlafQualitaet ?? 3,
@@ -175,6 +203,10 @@ export default function WellnessPage() {
             stimmung: data.todayLog.stimmung ?? 3,
             notiz: data.todayLog.notiz ?? "",
           });
+        }
+        // Priority 3: Defaults (no WHOOP, no manual log)
+        else {
+          setWhoopDataAvailable(false);
         }
       })
       .catch((err) => console.error("Wellness fetch error:", err))
@@ -239,6 +271,25 @@ export default function WellnessPage() {
       <Header title="Wellness Check-in" showBack />
       <PageContainer>
         <div className="space-y-6">
+          {/* WHOOP Auto-Import Indicator */}
+          {whoopDataAvailable && (
+            <Card className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                      WHOOP-Daten importiert
+                    </p>
+                    <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
+                      Deine Schlaf- und Erholungsdaten wurden automatisch von WHOOP übernommen. Du kannst sie jederzeit anpassen.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Schlafstunden */}
           <Card>
             <CardContent className="p-4 space-y-4">
