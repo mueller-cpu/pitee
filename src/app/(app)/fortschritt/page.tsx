@@ -493,22 +493,22 @@ export default function FortschrittPage() {
       <Header title="Fortschritt" />
       <PageContainer>
         <Tabs defaultValue="kraft" className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
-            <TabsTrigger value="kraft" className="min-h-[48px] gap-1.5">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-xs">Kraft</span>
+          <TabsList className="w-full grid grid-cols-4 h-auto p-1">
+            <TabsTrigger value="kraft" className="min-h-[52px] gap-2 flex-col py-2">
+              <TrendingUp className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Kraft</span>
             </TabsTrigger>
-            <TabsTrigger value="koerper" className="min-h-[48px] gap-1.5">
-              <Scale className="h-4 w-4" />
-              <span className="text-xs">Koerper</span>
+            <TabsTrigger value="koerper" className="min-h-[52px] gap-2 flex-col py-2">
+              <Scale className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Körper</span>
             </TabsTrigger>
-            <TabsTrigger value="volumen" className="min-h-[48px] gap-1.5">
-              <BarChart3 className="h-4 w-4" />
-              <span className="text-xs">Volumen</span>
+            <TabsTrigger value="volumen" className="min-h-[52px] gap-2 flex-col py-2">
+              <BarChart3 className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Volumen</span>
             </TabsTrigger>
-            <TabsTrigger value="wellness" className="min-h-[48px] gap-1.5">
-              <Heart className="h-4 w-4" />
-              <span className="text-xs">Wellness</span>
+            <TabsTrigger value="wellness" className="min-h-[52px] gap-2 flex-col py-2">
+              <Heart className="h-5 w-5" />
+              <span className="text-[11px] font-semibold">Wellness</span>
             </TabsTrigger>
           </TabsList>
 

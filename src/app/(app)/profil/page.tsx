@@ -24,6 +24,7 @@ interface UserData {
     gewicht: number;
     groesse: number;
     alter: number;
+    geschlecht: string;
     erfahrung: string;
     hauptziel: string;
     trainingstagePW: number;
@@ -114,6 +115,7 @@ export default function ProfilPage() {
   });
 
   useEffect(() => {
+    // Load user data
     fetch("/api/auth/me")
       .then((res) => {
         if (!res.ok) {
@@ -124,16 +126,27 @@ export default function ProfilPage() {
       })
       .then((data) => {
         setUser(data);
-        // Pre-fill weight from profile if available
-        if (data.profile?.gewicht) {
-          setKoerperForm((f) => ({
-            ...f,
-            gewicht: String(data.profile.gewicht),
-          }));
-        }
       })
       .catch((err) => console.error("Profile fetch error:", err))
       .finally(() => setLoading(false));
+
+    // Load latest body metrics to pre-fill form
+    fetch("/api/profil/letzte-koerperdaten")
+      .then((res) => res.json())
+      .then((response) => {
+        if (response.data) {
+          const data = response.data;
+          setKoerperForm({
+            gewicht: data.gewicht ? String(data.gewicht) : "",
+            koerperfett: data.koerperfett ? String(data.koerperfett) : "",
+            brustumfang: data.brustumfang ? String(data.brustumfang) : "",
+            taillenumfang: data.taillenumfang ? String(data.taillenumfang) : "",
+            oberarmumfang: data.oberarmumfang ? String(data.oberarmumfang) : "",
+            oberschenkelumfang: data.oberschenkelumfang ? String(data.oberschenkelumfang) : "",
+          });
+        }
+      })
+      .catch((err) => console.error("Last body metrics error:", err));
 
     // Check WHOOP connection status
     fetch("/api/auth/me")
@@ -404,7 +417,28 @@ export default function ProfilPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center min-h-[48px]">
+                  <span className="text-sm text-muted-foreground">Geschlecht</span>
+                  <span className="text-sm font-medium">
+                    {user.profile.geschlecht === "weiblich" ? "Weiblich" : "Männlich"}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center min-h-[48px]">
+                  <span className="text-sm text-muted-foreground">Alter</span>
+                  <span className="text-sm font-medium">
+                    {user.profile.alter} Jahre
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center min-h-[48px]">
+                  <span className="text-sm text-muted-foreground">Größe</span>
+                  <span className="text-sm font-medium">
+                    {user.profile.groesse} cm
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center min-h-[48px]">
                   <span className="text-sm text-muted-foreground">
                     Erfahrungslevel
                   </span>
@@ -414,7 +448,7 @@ export default function ProfilPage() {
                   </span>
                 </div>
                 <Separator />
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center min-h-[48px]">
                   <span className="text-sm text-muted-foreground">Ziel</span>
                   <span className="text-sm font-medium">
                     {ZIEL_LABELS[user.profile.hauptziel] ||
@@ -422,28 +456,12 @@ export default function ProfilPage() {
                   </span>
                 </div>
                 <Separator />
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center min-h-[48px]">
                   <span className="text-sm text-muted-foreground">
                     Trainingstage / Woche
                   </span>
                   <span className="text-sm font-medium">
                     {user.profile.trainingstagePW}x
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Groesse
-                  </span>
-                  <span className="text-sm font-medium">
-                    {user.profile.groesse} cm
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Alter</span>
-                  <span className="text-sm font-medium">
-                    {user.profile.alter} Jahre
                   </span>
                 </div>
               </CardContent>
@@ -511,7 +529,7 @@ export default function ProfilPage() {
           {/* Dark Mode */}
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between min-h-[56px]">
                 <div className="flex items-center gap-3">
                   {theme === "dark" ? (
                     <Moon className="h-5 w-5 text-muted-foreground" />
@@ -522,12 +540,13 @@ export default function ProfilPage() {
                 </div>
                 <button
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className={`relative w-14 h-8 rounded-full transition-colors ${
+                  className={`relative w-14 h-8 rounded-full transition-colors min-h-[48px] flex items-center ${
                     theme === "dark" ? "bg-primary" : "bg-muted"
                   }`}
+                  aria-label="Dark Mode umschalten"
                 >
                   <span
-                    className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                    className={`absolute top-1/2 -translate-y-1/2 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
                       theme === "dark" ? "translate-x-6" : ""
                     }`}
                   />
