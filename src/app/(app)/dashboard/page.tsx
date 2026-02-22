@@ -48,49 +48,44 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
-      title: "Training starten",
-      description: "Heutiges Workout durchführen",
+      title: "Heutiges Training",
+      description: "Workout jetzt starten",
       icon: Dumbbell,
       href: "/training",
       color: "text-blue-600 dark:text-blue-400",
     },
     {
-      title: "Ernährungsplan",
-      description: "Mahlzeiten für heute",
+      title: "Nächste Mahlzeit",
+      description: "Was steht an?",
       icon: UtensilsCrossed,
       href: "/ernaehrung",
       color: "text-green-600 dark:text-green-400",
     },
     {
-      title: "Fortschritt",
-      description: "Deine Entwicklung",
-      icon: TrendingUp,
-      href: "/fortschritt",
-      color: "text-purple-600 dark:text-purple-400",
-    },
-    {
       title: "Wellness Check-in",
-      description: "Wie fühlst du dich?",
+      description: "Wie fühlst du dich heute?",
       icon: Heart,
       href: "/wellness",
       color: "text-red-500 dark:text-red-400",
     },
     {
       title: "Coach fragen",
-      description: "KI-Coach für Fragen",
+      description: "Frag deinen KI-Coach",
       icon: MessageCircle,
       href: "/coach",
       color: "text-orange-600 dark:text-orange-400",
     },
   ];
 
+  const firstName = user.name.split(' ')[0];
+
   return (
     <>
-      <Header title="Dashboard" />
+      <Header title="" />
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Hallo, {user.name}!
+            Hallo, {firstName}!
           </h1>
           <p className="text-muted-foreground mt-1">
             Was steht heute an?
