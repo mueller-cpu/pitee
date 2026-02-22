@@ -280,6 +280,41 @@ export default function AusfuehrenPage() {
     }
   }, [einheitId, router]);
 
+  // ─── Prevent accidental navigation ────────────────────────
+
+  useEffect(() => {
+    // 1. Intercept page reload/close
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Only block if we haven't finished the workout (phase !== "zusammenfassung")
+      if (phase !== "zusammenfassung") {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // 2. Intercept mobile back button or swipe gesture
+    // Push a dummy state so we have something to "pop" without leaving the page
+    if (phase !== "zusammenfassung") {
+      window.history.pushState(null, "", window.location.href);
+    }
+
+    const handlePopState = () => {
+      if (phase !== "zusammenfassung") {
+        // Push the dummy state back to stay on the page
+        window.history.pushState(null, "", window.location.href);
+        // Open the custom cancellation dialog
+        setShowAbbrechen(true);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [phase]);
+
   // ─── Current exercise ───────────────────────────────────
 
   const aktuelleUebung = einheit?.uebungen[aktuelleUebungIdx] ?? null;
@@ -292,11 +327,11 @@ export default function AusfuehrenPage() {
   const vorherSatz: VorherSatzData | null =
     vorherUebungDaten?.satzLogs[aktuellerSatzIdx]
       ? {
-          gewicht: vorherUebungDaten.satzLogs[aktuellerSatzIdx].gewicht,
-          wiederholungen:
-            vorherUebungDaten.satzLogs[aktuellerSatzIdx].wiederholungen,
-          rir: vorherUebungDaten.satzLogs[aktuellerSatzIdx].rir,
-        }
+        gewicht: vorherUebungDaten.satzLogs[aktuellerSatzIdx].gewicht,
+        wiederholungen:
+          vorherUebungDaten.satzLogs[aktuellerSatzIdx].wiederholungen,
+        rir: vorherUebungDaten.satzLogs[aktuellerSatzIdx].rir,
+      }
       : null;
 
   // Already logged sets for current exercise
