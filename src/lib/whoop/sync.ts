@@ -56,11 +56,14 @@ export async function syncWhoopData(userId: string): Promise<{
     const endISO = end.toISOString();
 
     // WHOOP-Daten parallel abrufen
+    console.log(`Fetching WHOOP data from ${startISO} to ${endISO}`);
     const [cycles, recoveries, sleeps] = await Promise.all([
       whoopClient.getCycles(accessToken, startISO, endISO),
       whoopClient.getRecovery(accessToken, startISO, endISO),
       whoopClient.getSleep(accessToken, startISO, endISO),
     ]);
+
+    console.log(`WHOOP data received: ${cycles.length} cycles, ${recoveries.length} recoveries, ${sleeps.length} sleeps`);
 
     let syncedDays = 0;
 
