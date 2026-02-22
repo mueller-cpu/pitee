@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       alter,
       gewicht,
       groesse,
+      geschlecht,
       erfahrung,
       hauptziel,
       trainingstagePW,
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
         where: { userId: user.id },
         create: {
           userId: user.id,
+          geschlecht: geschlecht || "maennlich", // Default für Männer 50+
           alter,
           gewicht,
           groesse,
@@ -64,6 +66,7 @@ export async function POST(request: Request) {
           onboardingDone: true,
         },
         update: {
+          geschlecht: geschlecht || "maennlich",
           alter,
           gewicht,
           groesse,
