@@ -38,11 +38,11 @@ interface WellnessFormData {
 
 // ── Metric configs ──
 const METRICS = [
-  { key: "schlafQualitaet" as const, label: "Schlaf", icon: "bedtime", colorClass: "text-blue-400", bgClass: "bg-blue-500/20", activeClass: "border-blue-500 bg-blue-500/10", sparkColor: "#3b82f6" },
-  { key: "energie" as const, label: "Energie", icon: "bolt", colorClass: "text-yellow-500", bgClass: "bg-yellow-500/20", activeClass: "border-yellow-500 bg-yellow-500/10", sparkColor: "#eab308" },
-  { key: "stress" as const, label: "Stress", icon: "psychology", colorClass: "text-red-500", bgClass: "bg-red-500/20", activeClass: "border-red-500 bg-red-500/10", sparkColor: "#ef4444" },
-  { key: "muskelkater" as const, label: "Muskelkater", icon: "local_fire_department", colorClass: "text-orange-500", bgClass: "bg-orange-500/20", activeClass: "border-orange-500 bg-orange-500/10", sparkColor: "#f97316" },
-  { key: "stimmung" as const, label: "Stimmung", icon: "sentiment_satisfied", colorClass: "text-purple-400", bgClass: "bg-purple-500/20", activeClass: "border-purple-500 bg-purple-500/10", sparkColor: "#a855f7" },
+  { key: "schlafQualitaet" as const, label: "Schlaf", icon: "bedtime", colorClass: "text-blue-400", bgClass: "bg-blue-500/20", activeClass: "border-blue-500 bg-blue-500/10", sparkColor: "#3b82f6", labels: ["Sehr schlecht", "Sehr gut"] },
+  { key: "energie" as const, label: "Energie", icon: "bolt", colorClass: "text-yellow-500", bgClass: "bg-yellow-500/20", activeClass: "border-yellow-500 bg-yellow-500/10", sparkColor: "#eab308", labels: ["Erschöpft", "Voller Energie"] },
+  { key: "stress" as const, label: "Stress", icon: "psychology", colorClass: "text-red-500", bgClass: "bg-red-500/20", activeClass: "border-red-500 bg-red-500/10", sparkColor: "#ef4444", labels: ["Sehr stark", "Entspannt"] },
+  { key: "muskelkater" as const, label: "Muskelkater", icon: "local_fire_department", colorClass: "text-orange-500", bgClass: "bg-orange-500/20", activeClass: "border-orange-500 bg-orange-500/10", sparkColor: "#f97316", labels: ["Sehr stark", "Gar nicht"] },
+  { key: "stimmung" as const, label: "Stimmung", icon: "sentiment_satisfied", colorClass: "text-purple-400", bgClass: "bg-purple-500/20", activeClass: "border-purple-500 bg-purple-500/10", sparkColor: "#a855f7", labels: ["Sehr schlecht", "Sehr gut"] },
 ];
 
 function Sparkline({
@@ -303,12 +303,10 @@ export default function WellnessPage() {
                 );
               })}
             </div>
-            {m.key === "schlafQualitaet" && (
-              <div className="flex justify-between text-[10px] uppercase tracking-widest text-slate-500 font-bold px-1">
-                <span>Sehr schlecht</span>
-                <span>Sehr gut</span>
-              </div>
-            )}
+            <div className="flex justify-between text-[10px] uppercase tracking-widest text-slate-500 font-bold px-1 mt-1">
+              <span>{m.labels[0]}</span>
+              <span>{m.labels[1]}</span>
+            </div>
           </section>
         ))}
 
