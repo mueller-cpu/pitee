@@ -59,6 +59,13 @@ const ERNAEHRUNGSWEISE_LABELS: Record<string, string> = {
   vegan: "Vegan",
 };
 
+const ZIEL_LABELS: Record<string, string> = {
+  muskelaufbau: "Muskelaufbau",
+  fettabbau: "Fettabbau",
+  gesundheit: "Gesundheit & Fitness",
+  kraft: "Kraft steigern",
+};
+
 export default function ProfilPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
@@ -76,6 +83,10 @@ export default function ProfilPage() {
     ernaehrungsweise: "omnivor",
   });
   const [savingErnaehrung, setSavingErnaehrung] = useState(false);
+
+  const [zielDialogOpen, setZielDialogOpen] = useState(false);
+  const [zielForm, setZielForm] = useState("");
+  const [savingZiel, setSavingZiel] = useState(false);
 
   const [koerperForm, setKoerperForm] = useState<KoerperForm>({
     gewicht: "",
@@ -98,6 +109,7 @@ export default function ProfilPage() {
             anzahlMahlzeiten: data.profile.anzahlMahlzeiten || 4,
             ernaehrungsweise: data.profile.ernaehrungsweise || "omnivor",
           });
+          setZielForm(data.profile.hauptziel || "muskelaufbau");
         }
       })
       .catch((err) => console.error("Profile fetch error:", err))
@@ -260,6 +272,42 @@ export default function ProfilPage() {
     }
   };
 
+  const handleSaveZiel = async () => {
+    setSavingZiel(true);
+    try {
+      const res = await fetch("/api/profil/hauptziel", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hauptziel: zielForm }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Save failed");
+
+      setUser((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          profile: prev.profile
+            ? {
+              ...prev.profile,
+              hauptziel: data.hauptziel,
+            }
+            : prev.profile,
+        };
+      });
+
+      toast.success("Trainingsziel gespeichert! Generiere einen neuen Plan, um das Ziel zu berücksichtigen.");
+      setZielDialogOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Fehler beim Speichern.";
+      toast.error(message);
+    } finally {
+      setSavingZiel(false);
+    }
+  };
+
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
@@ -408,6 +456,18 @@ export default function ProfilPage() {
             </div>
             <div
               className="flex justify-between items-center p-5 bg-[#161618] rounded-2xl border border-[#262629] cursor-pointer active:bg-white/5"
+              onClick={() => setZielDialogOpen(true)}
+            >
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-[#00FFC2]">target</span>
+                <span className="font-medium text-slate-300">Trainingsziel</span>
+              </div>
+              <span className="font-bold text-white">
+                {user.profile ? ZIEL_LABELS[user.profile.hauptziel] || user.profile.hauptziel : "--"}
+              </span>
+            </div>
+            <div
+              className="flex justify-between items-center p-5 bg-[#161618] rounded-2xl border border-[#262629] cursor-pointer active:bg-white/5"
               onClick={() => setErnaehrungDialogOpen(true)}
             >
               <div className="flex items-center gap-4">
@@ -509,6 +569,55 @@ export default function ProfilPage() {
           </p>
         </div>
       </div>
+
+      {/* Trainingsziel Dialog */}
+      <Dialog open={zielDialogOpen} onOpenChange={setZielDialogOpen}>
+        <DialogContent className="bg-[#161618] border border-[#262629] text-white">
+          <DialogHeader>
+            <DialogTitle>Trainingsziel ändern</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Wähle dein Hauptziel. Generiere danach einen neuen Trainingsplan, um das Ziel zu berücksichtigen.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-slate-300">Hauptziel</Label>
+              <Select
+                value={zielForm}
+                onValueChange={(value) => setZielForm(value)}
+              >
+                <SelectTrigger className="w-full min-h-[48px] bg-[#0A0A0B] border-[#262629] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#161618] border-[#262629] text-white">
+                  <SelectItem value="muskelaufbau">Muskelaufbau</SelectItem>
+                  <SelectItem value="fettabbau">Fettabbau</SelectItem>
+                  <SelectItem value="gesundheit">Gesundheit & Fitness</SelectItem>
+                  <SelectItem value="kraft">Kraft steigern</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setZielDialogOpen(false)}
+              className="min-h-[48px] border-[#262629] bg-transparent text-white hover:bg-white/5 hover:text-white"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleSaveZiel}
+              disabled={savingZiel}
+              className="min-h-[48px] bg-primary text-black hover:bg-primary/90"
+            >
+              {savingZiel ? "Speichern..." : "Speichern"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Ernährungseinstellungen Dialog */}
       <Dialog open={ernaehrungDialogOpen} onOpenChange={setErnaehrungDialogOpen}>
