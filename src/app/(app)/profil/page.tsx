@@ -154,6 +154,18 @@ export default function ProfilPage() {
 
       if (!res.ok) throw new Error("Save failed");
 
+      const data = await res.json();
+
+      // Update form with saved values to ensure they persist
+      if (data.bodyMetric) {
+        setKoerperForm({
+          gewicht: data.bodyMetric.gewicht ? String(data.bodyMetric.gewicht) : koerperForm.gewicht,
+          koerperfett: data.bodyMetric.koerperfett ? String(data.bodyMetric.koerperfett) : koerperForm.koerperfett,
+          brustumfang: data.bodyMetric.brustumfang ? String(data.bodyMetric.brustumfang) : koerperForm.brustumfang,
+          taillenumfang: data.bodyMetric.taillenumfang ? String(data.bodyMetric.taillenumfang) : koerperForm.taillenumfang,
+        });
+      }
+
       toast.success("Körperdaten gespeichert!");
     } catch {
       toast.error("Fehler beim Speichern der Körperdaten.");
