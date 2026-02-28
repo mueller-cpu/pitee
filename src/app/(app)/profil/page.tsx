@@ -44,6 +44,8 @@ interface UserData {
 interface KoerperForm {
   gewicht: string;
   koerperfett: string;
+  brustumfang: string;
+  taillenumfang: string;
 }
 
 const ERFAHRUNG_LABELS: Record<string, string> = {
@@ -91,6 +93,8 @@ export default function ProfilPage() {
   const [koerperForm, setKoerperForm] = useState<KoerperForm>({
     gewicht: "",
     koerperfett: "",
+    brustumfang: "",
+    taillenumfang: "",
   });
 
   useEffect(() => {
@@ -123,6 +127,8 @@ export default function ProfilPage() {
           setKoerperForm({
             gewicht: data.gewicht ? String(data.gewicht) : "",
             koerperfett: data.koerperfett ? String(data.koerperfett) : "",
+            brustumfang: data.brustumfang ? String(data.brustumfang) : "",
+            taillenumfang: data.taillenumfang ? String(data.taillenumfang) : "",
           });
         }
       })
@@ -159,6 +165,8 @@ export default function ProfilPage() {
       const body = {
         gewicht: koerperForm.gewicht ? parseFloat(koerperForm.gewicht) : null,
         koerperfett: koerperForm.koerperfett ? parseFloat(koerperForm.koerperfett) : null,
+        brustumfang: koerperForm.brustumfang ? parseFloat(koerperForm.brustumfang) : null,
+        taillenumfang: koerperForm.taillenumfang ? parseFloat(koerperForm.taillenumfang) : null,
       };
 
       const hasValue = Object.values(body).some((v) => v !== null);
@@ -429,6 +437,34 @@ export default function ProfilPage() {
                   placeholder="--"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">%</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Brustumfang</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={koerperForm.brustumfang}
+                  onChange={(e) => setKoerperForm({ ...koerperForm, brustumfang: e.target.value })}
+                  className="w-full rounded-2xl bg-[#161618] border border-[#262629] p-4 text-xl font-bold text-white focus:ring-0 input-focus-glow transition-all focus:outline-none"
+                  placeholder="--"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">CM</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Taillenumfang</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={koerperForm.taillenumfang}
+                  onChange={(e) => setKoerperForm({ ...koerperForm, taillenumfang: e.target.value })}
+                  className="w-full rounded-2xl bg-[#161618] border border-[#262629] p-4 text-xl font-bold text-white focus:ring-0 input-focus-glow transition-all focus:outline-none"
+                  placeholder="--"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">CM</span>
               </div>
             </div>
           </div>

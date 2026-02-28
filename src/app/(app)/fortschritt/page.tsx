@@ -222,9 +222,25 @@ function KoerperTab({ data }: { data: KoerperEintrag[] }) {
   if (data.length === 0) return <EmptyState message="Noch keine Körperdaten vorhanden." />;
 
   const gewichtData = data.filter((d) => d.gewicht != null);
+  const koerperfettData = data.filter((d) => d.koerperfett != null);
+  const brustumfangData = data.filter((d) => d.brustumfang != null);
+  const taillenumfangData = data.filter((d) => d.taillenumfang != null);
+
   const latestWeight = gewichtData.length > 0 ? gewichtData[gewichtData.length - 1].gewicht : null;
   const firstWeight = gewichtData.length > 1 ? gewichtData[0].gewicht : null;
   const weightDiff = latestWeight && firstWeight ? +(latestWeight - firstWeight).toFixed(1) : null;
+
+  const latestKFA = koerperfettData.length > 0 ? koerperfettData[koerperfettData.length - 1].koerperfett : null;
+  const firstKFA = koerperfettData.length > 1 ? koerperfettData[0].koerperfett : null;
+  const kfaDiff = latestKFA && firstKFA ? +(latestKFA - firstKFA).toFixed(1) : null;
+
+  const latestBrust = brustumfangData.length > 0 ? brustumfangData[brustumfangData.length - 1].brustumfang : null;
+  const firstBrust = brustumfangData.length > 1 ? brustumfangData[0].brustumfang : null;
+  const brustDiff = latestBrust && firstBrust ? +(latestBrust - firstBrust).toFixed(1) : null;
+
+  const latestTaille = taillenumfangData.length > 0 ? taillenumfangData[taillenumfangData.length - 1].taillenumfang : null;
+  const firstTaille = taillenumfangData.length > 1 ? taillenumfangData[0].taillenumfang : null;
+  const tailleDiff = latestTaille && firstTaille ? +(latestTaille - firstTaille).toFixed(1) : null;
 
   return (
     <div className="space-y-8">
@@ -255,6 +271,105 @@ function KoerperTab({ data }: { data: KoerperEintrag[] }) {
                 <YAxis domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Line type="monotone" dataKey="gewicht" stroke="#00F5FF" strokeWidth={3} dot={false} className="chart-glow-blue" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {koerperfettData.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Körperfettanteil</h3>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-white">{latestKFA}<span className="text-lg font-medium text-slate-500 ml-1">%</span></span>
+                {kfaDiff !== null && kfaDiff !== 0 && (
+                  <span className={cn("px-2 py-0.5 rounded text-[10px] font-black flex items-center gap-1 border",
+                    kfaDiff < 0 ? "bg-[#39FF14]/10 text-[#39FF14] border-[#39FF14]/20" : "bg-[#FF3366]/10 text-[#FF3366] border-[#FF3366]/20")}>
+                    <span className="material-symbols-outlined text-[10px] font-black">
+                      {kfaDiff < 0 ? "arrow_downward" : "arrow_upward"}
+                    </span>
+                    {Math.abs(kfaDiff)}%
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="relative h-48 w-full bg-[#0F0F12] rounded-2xl border border-white/5 p-4 overflow-hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={koerperfettData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="datum" tickFormatter={formatDatum} tick={{ fontSize: 10, fill: "#475569", fontWeight: 800 }} axisLine={false} tickLine={false} />
+                <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Line type="monotone" dataKey="koerperfett" stroke="#39FF14" strokeWidth={3} dot={false} className="chart-glow-green" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {brustumfangData.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Brustumfang</h3>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-white">{latestBrust}<span className="text-lg font-medium text-slate-500 ml-1">cm</span></span>
+                {brustDiff !== null && brustDiff !== 0 && (
+                  <span className={cn("px-2 py-0.5 rounded text-[10px] font-black flex items-center gap-1 border",
+                    brustDiff > 0 ? "bg-[#39FF14]/10 text-[#39FF14] border-[#39FF14]/20" : "bg-[#00F5FF]/10 text-[#00F5FF] border-[#00F5FF]/20")}>
+                    <span className="material-symbols-outlined text-[10px] font-black">
+                      {brustDiff > 0 ? "arrow_upward" : "arrow_downward"}
+                    </span>
+                    {Math.abs(brustDiff)}cm
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="relative h-48 w-full bg-[#0F0F12] rounded-2xl border border-white/5 p-4 overflow-hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={brustumfangData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="datum" tickFormatter={formatDatum} tick={{ fontSize: 10, fill: "#475569", fontWeight: 800 }} axisLine={false} tickLine={false} />
+                <YAxis domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Line type="monotone" dataKey="brustumfang" stroke="#BC13FE" strokeWidth={3} dot={false} className="chart-glow-purple" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {taillenumfangData.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Taillenumfang</h3>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-white">{latestTaille}<span className="text-lg font-medium text-slate-500 ml-1">cm</span></span>
+                {tailleDiff !== null && tailleDiff !== 0 && (
+                  <span className={cn("px-2 py-0.5 rounded text-[10px] font-black flex items-center gap-1 border",
+                    tailleDiff < 0 ? "bg-[#39FF14]/10 text-[#39FF14] border-[#39FF14]/20" : "bg-[#FF3366]/10 text-[#FF3366] border-[#FF3366]/20")}>
+                    <span className="material-symbols-outlined text-[10px] font-black">
+                      {tailleDiff < 0 ? "arrow_downward" : "arrow_upward"}
+                    </span>
+                    {Math.abs(tailleDiff)}cm
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="relative h-48 w-full bg-[#0F0F12] rounded-2xl border border-white/5 p-4 overflow-hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={taillenumfangData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="datum" tickFormatter={formatDatum} tick={{ fontSize: 10, fill: "#475569", fontWeight: 800 }} axisLine={false} tickLine={false} />
+                <YAxis domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Line type="monotone" dataKey="taillenumfang" stroke="#FF3366" strokeWidth={3} dot={false} className="chart-glow-red" />
               </LineChart>
             </ResponsiveContainer>
           </div>

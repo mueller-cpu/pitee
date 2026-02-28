@@ -14,6 +14,14 @@ interface Einheit {
   istAbgeschlossen: boolean;
 }
 
+interface UebungDetail {
+  id: string;
+  name: string;
+  saetze: number;
+  wiederholungen: string;
+  rir: number;
+}
+
 interface TrainingPlan {
   id: string;
   name: string;
@@ -52,6 +60,8 @@ export default function TrainingPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [whoopData, setWhoopData] = useState<WhoopData | null>(null);
+  const [expandedEinheitId, setExpandedEinheitId] = useState<string | null>(null);
+  const [einheitDetails, setEinheitDetails] = useState<Record<string, UebungDetail[]>>({});
 
   useEffect(() => {
     fetchPlan();
@@ -108,6 +118,37 @@ export default function TrainingPage() {
       toast.error(message);
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function toggleEinheitExpand(einheitId: string) {
+    if (expandedEinheitId === einheitId) {
+      setExpandedEinheitId(null);
+      return;
+    }
+
+    setExpandedEinheitId(einheitId);
+
+    // If we already fetched details, don't fetch again
+    if (einheitDetails[einheitId]) {
+      return;
+    }
+
+    // Fetch einheit details
+    try {
+      const res = await fetch(`/api/training/einheit/${einheitId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const uebungen = data.einheit.uebungen.map((u: any) => ({
+        id: u.id,
+        name: u.name,
+        saetze: u.saetze,
+        wiederholungen: u.wiederholungen,
+        rir: u.rir,
+      }));
+      setEinheitDetails((prev) => ({ ...prev, [einheitId]: uebungen }));
+    } catch (err) {
+      console.error("Failed to fetch einheit details:", err);
     }
   }
 
@@ -242,55 +283,105 @@ export default function TrainingPage() {
           </div>
 
           <div className="space-y-4">
-            {plan.einheiten.map((einheit) => (
-              <div
-                key={einheit.id}
-                onClick={() => {
-                  if (!einheit.istAbgeschlossen) {
-                    router.push(`/training/${einheit.id}/ausfuehren`);
-                  }
-                }}
-                className={cn(
-                  "flex items-center justify-between p-6 rounded-2xl cursor-pointer transition-all active:scale-[0.98]",
-                  einheit.istAbgeschlossen
-                    ? "bg-[#39ff14]/5 border border-[#39ff14]/10"
-                    : "glass-panel"
-                )}
-              >
-                <div className="flex items-center gap-5">
-                  <div className={cn(
-                    "rounded-xl flex items-center justify-center",
+            {plan.einheiten.map((einheit) => {
+              const isExpanded = expandedEinheitId === einheit.id;
+              const uebungen = einheitDetails[einheit.id] || [];
+
+              return (
+                <div
+                  key={einheit.id}
+                  className={cn(
+                    "rounded-2xl transition-all overflow-hidden",
                     einheit.istAbgeschlossen
-                      ? "bg-[#39ff14] text-black w-10 h-10 shadow-[0_0_15px_rgba(57,255,20,0.3)]"
-                      : "w-10 h-10 border-2 border-slate-800 bg-slate-900/50 text-slate-400 font-black text-xs"
-                  )}>
-                    {einheit.istAbgeschlossen ? (
-                      <span className="material-symbols-outlined font-black">done</span>
-                    ) : (
-                      WOCHENTAGE_KURZ[einheit.wochentag]
-                    )}
-                  </div>
-                  <div>
-                    <p className={cn(
-                      "font-bold text-lg",
-                      einheit.istAbgeschlossen ? "text-slate-500 line-through" : "text-white"
-                    )}>
-                      {WOCHENTAGE[einheit.wochentag]} – {einheit.typ}
-                    </p>
-                    {einheit.istAbgeschlossen ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-[#39ff14] font-bold uppercase tracking-wider neon-glow-green">Abgeschlossen</span>
+                      ? "bg-[#39ff14]/5 border border-[#39ff14]/10"
+                      : "glass-panel"
+                  )}
+                >
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleEinheitExpand(einheit.id);
+                    }}
+                    className="flex items-center justify-between p-6 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className={cn(
+                        "rounded-xl flex items-center justify-center",
+                        einheit.istAbgeschlossen
+                          ? "bg-[#39ff14] text-black w-10 h-10 shadow-[0_0_15px_rgba(57,255,20,0.3)]"
+                          : "w-10 h-10 border-2 border-slate-800 bg-slate-900/50 text-slate-400 font-black text-xs"
+                      )}>
+                        {einheit.istAbgeschlossen ? (
+                          <span className="material-symbols-outlined font-black">done</span>
+                        ) : (
+                          WOCHENTAGE_KURZ[einheit.wochentag]
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-sm text-slate-500 font-medium">{einheit.name} • {einheit.anzahlUebungen} Übungen</p>
+                      <div>
+                        <p className={cn(
+                          "font-bold text-lg",
+                          einheit.istAbgeschlossen ? "text-slate-500 line-through" : "text-white"
+                        )}>
+                          {WOCHENTAGE[einheit.wochentag]} – {einheit.typ}
+                        </p>
+                        {einheit.istAbgeschlossen ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-[#39ff14] font-bold uppercase tracking-wider neon-glow-green">Abgeschlossen</span>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500 font-medium">{einheit.name} • {einheit.anzahlUebungen} Übungen</p>
+                        )}
+                      </div>
+                    </div>
+                    {!einheit.istAbgeschlossen && (
+                      <span className={cn(
+                        "material-symbols-outlined text-slate-600 transition-transform",
+                        isExpanded && "rotate-90"
+                      )}>
+                        chevron_right
+                      </span>
                     )}
                   </div>
+
+                  {/* Expandable exercise preview */}
+                  {isExpanded && !einheit.istAbgeschlossen && (
+                    <div className="px-6 pb-6 space-y-4">
+                      <div className="border-t border-white/5 pt-4">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Übungen</p>
+                        <div className="space-y-2">
+                          {uebungen.map((uebung, idx) => (
+                            <div
+                              key={uebung.id}
+                              className="flex items-center justify-between bg-white/5 rounded-lg p-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="flex items-center justify-center w-6 h-6 rounded-md bg-primary/20 text-primary text-xs font-bold">
+                                  {idx + 1}
+                                </span>
+                                <span className="text-sm font-medium text-white">{uebung.name}</span>
+                              </div>
+                              <span className="text-xs text-slate-400">
+                                {uebung.saetze} × {uebung.wiederholungen}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/training/${einheit.id}/ausfuehren`);
+                        }}
+                        className="w-full bg-primary hover:brightness-110 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+                      >
+                        <span className="material-symbols-outlined text-xl">play_circle</span>
+                        <span>Training starten</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {!einheit.istAbgeschlossen && (
-                  <span className="material-symbols-outlined text-slate-600">chevron_right</span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
