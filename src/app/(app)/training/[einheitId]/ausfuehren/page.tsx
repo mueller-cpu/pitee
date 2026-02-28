@@ -32,6 +32,10 @@ import SatzLogger, {
   type SatzErgebnis,
   type VorherSatzData,
 } from "@/components/workout/SatzLogger";
+import TimerLogger, {
+  type SatzErgebnis as TimerSatzErgebnis,
+  type VorherSatzData as TimerVorherSatzData,
+} from "@/components/workout/TimerLogger";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────
@@ -72,6 +76,7 @@ interface LetzteSatzDaten {
   wiederholungen: number | null;
   rir: number | null;
   rpe: number | null;
+  dauer: number | null;
 }
 
 interface LetzteUebungDaten {
@@ -320,6 +325,13 @@ export default function AusfuehrenPage() {
   const aktuelleUebung = einheit?.uebungen[aktuelleUebungIdx] ?? null;
   const gesamtUebungen = einheit?.uebungen.length ?? 0;
 
+  // Check if current exercise is time-based (e.g., "Zeit", "60s", "Dauer")
+  const istZeitbasiert = aktuelleUebung?.wiederholungen.toLowerCase().includes("zeit") ||
+                         aktuelleUebung?.wiederholungen.toLowerCase().includes("dauer") ||
+                         aktuelleUebung?.wiederholungen.toLowerCase().includes("s") ||
+                         aktuelleUebung?.wiederholungen.toLowerCase().includes("sec") ||
+                         aktuelleUebung?.wiederholungen.toLowerCase().includes("min");
+
   // Find previous data for current exercise
   const vorherUebungDaten = letzteDaten?.uebungLogs.find(
     (ul) => ul.uebungName === aktuelleUebung?.name
@@ -334,6 +346,13 @@ export default function AusfuehrenPage() {
       }
       : null;
 
+  const vorherSatzZeit: TimerVorherSatzData | null =
+    vorherUebungDaten?.satzLogs[aktuellerSatzIdx]
+      ? {
+        dauer: vorherUebungDaten.satzLogs[aktuellerSatzIdx].dauer,
+      }
+      : null;
+
   // Already logged sets for current exercise
   const aktuelleGeloggteSaetze =
     uebungLogs.find((ul) => ul.uebungName === aktuelleUebung?.name)?.saetze ??
@@ -342,7 +361,7 @@ export default function AusfuehrenPage() {
   // ─── Handlers ───────────────────────────────────────────
 
   const handleSatzSpeichern = useCallback(
-    (ergebnis: SatzErgebnis) => {
+    (ergebnis: SatzErgebnis | TimerSatzErgebnis) => {
       if (!aktuelleUebung) return;
 
       setUebungLogs((prev) => {
@@ -352,7 +371,7 @@ export default function AusfuehrenPage() {
         if (existing) {
           return prev.map((ul) =>
             ul.uebungName === aktuelleUebung.name
-              ? { ...ul, saetze: [...ul.saetze, ergebnis] }
+              ? { ...ul, saetze: [...ul.saetze, ergebnis as any] }
               : ul
           );
         }
@@ -361,7 +380,7 @@ export default function AusfuehrenPage() {
           {
             uebungName: aktuelleUebung.name,
             sortierung: aktuelleUebung.sortierung,
-            saetze: [ergebnis],
+            saetze: [ergebnis as any],
             rpe: null,
             notiz: "",
           },
@@ -440,9 +459,10 @@ export default function AusfuehrenPage() {
           notiz: ul.notiz || null,
           satzLogs: ul.saetze.map((sl) => ({
             satzNummer: sl.satzNummer,
-            gewicht: sl.gewicht,
-            wiederholungen: sl.wiederholungen,
-            rir: sl.rir,
+            gewicht: sl.gewicht ?? null,
+            wiederholungen: sl.wiederholungen ?? null,
+            rir: sl.rir ?? null,
+            dauer: (sl as any).dauer ?? null,
             rpe: null,
             notiz: null,
           })),
@@ -593,15 +613,21 @@ export default function AusfuehrenPage() {
                     </div>
                     {ul.saetze.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {ul.saetze.map((s, sIdx) => (
-                          <Badge
-                            key={sIdx}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {s.gewicht}kg x {s.wiederholungen}
-                          </Badge>
-                        ))}
+                        {ul.saetze.map((s, sIdx) => {
+                          const satzMitDauer = s as any;
+                          const hatDauer = satzMitDauer.dauer != null;
+                          return (
+                            <Badge
+                              key={sIdx}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {hatDauer
+                                ? `${Math.floor(satzMitDauer.dauer / 60)}:${(satzMitDauer.dauer % 60).toString().padStart(2, "0")}`
+                                : `${s.gewicht}kg x ${s.wiederholungen}`}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
@@ -708,30 +734,48 @@ export default function AusfuehrenPage() {
           {/* Logged sets overview */}
           {aktuelleGeloggteSaetze.length > 0 && phase !== "uebungRPE" && (
             <div className="flex flex-wrap gap-2">
-              {aktuelleGeloggteSaetze.map((s, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-1.5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 px-3 py-1.5"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                  <span className="text-sm font-medium text-green-800 dark:text-green-300">
-                    S{s.satzNummer}: {s.gewicht}kg x {s.wiederholungen}
-                  </span>
-                </div>
-              ))}
+              {aktuelleGeloggteSaetze.map((s, idx) => {
+                const satzMitDauer = s as any;
+                const hatDauer = satzMitDauer.dauer != null;
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-1.5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 px-3 py-1.5"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                    <span className="text-sm font-medium text-green-800 dark:text-green-300">
+                      S{s.satzNummer}:{" "}
+                      {hatDauer
+                        ? `${Math.floor(satzMitDauer.dauer / 60)}:${(satzMitDauer.dauer % 60).toString().padStart(2, "0")}`
+                        : `${s.gewicht}kg x ${s.wiederholungen}`}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
 
           {/* Phase content */}
           {phase === "uebung" && aktuelleUebung && (
-            <SatzLogger
-              satzNummer={aktuellerSatzIdx + 1}
-              zielGewicht={aktuelleUebung.gewicht}
-              zielReps={aktuelleUebung.wiederholungen}
-              zielRIR={aktuelleUebung.rir}
-              vorherSatz={vorherSatz}
-              onSave={handleSatzSpeichern}
-            />
+            <>
+              {istZeitbasiert ? (
+                <TimerLogger
+                  satzNummer={aktuellerSatzIdx + 1}
+                  zielRIR={aktuelleUebung.rir}
+                  vorherSatz={vorherSatzZeit}
+                  onSave={handleSatzSpeichern}
+                />
+              ) : (
+                <SatzLogger
+                  satzNummer={aktuellerSatzIdx + 1}
+                  zielGewicht={aktuelleUebung.gewicht}
+                  zielReps={aktuelleUebung.wiederholungen}
+                  zielRIR={aktuelleUebung.rir}
+                  vorherSatz={vorherSatz}
+                  onSave={handleSatzSpeichern}
+                />
+              )}
+            </>
           )}
 
           {phase === "pause" && aktuelleUebung && (

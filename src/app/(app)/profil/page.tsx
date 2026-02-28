@@ -91,6 +91,25 @@ export default function ProfilPage() {
     taillenumfang: "",
   });
 
+  const fetchKoerperdaten = async () => {
+    try {
+      const res = await fetch("/api/profil/letzte-koerperdaten");
+      const response = await res.json();
+      console.log("Fetched body metrics:", response);
+      if (response.data) {
+        const data = response.data;
+        setKoerperForm({
+          gewicht: data.gewicht ? String(data.gewicht) : "",
+          koerperfett: data.koerperfett ? String(data.koerperfett) : "",
+          brustumfang: data.brustumfang ? String(data.brustumfang) : "",
+          taillenumfang: data.taillenumfang ? String(data.taillenumfang) : "",
+        });
+      }
+    } catch (err) {
+      console.error("Last body metrics error:", err);
+    }
+  };
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => {
@@ -113,20 +132,7 @@ export default function ProfilPage() {
       .catch((err) => console.error("Profile fetch error:", err))
       .finally(() => setLoading(false));
 
-    fetch("/api/profil/letzte-koerperdaten")
-      .then((res) => res.json())
-      .then((response) => {
-        if (response.data) {
-          const data = response.data;
-          setKoerperForm({
-            gewicht: data.gewicht ? String(data.gewicht) : "",
-            koerperfett: data.koerperfett ? String(data.koerperfett) : "",
-            brustumfang: data.brustumfang ? String(data.brustumfang) : "",
-            taillenumfang: data.taillenumfang ? String(data.taillenumfang) : "",
-          });
-        }
-      })
-      .catch((err) => console.error("Last body metrics error:", err));
+    fetchKoerperdaten();
   }, [router]);
 
   const handleSaveKoerperdaten = async () => {
@@ -154,17 +160,8 @@ export default function ProfilPage() {
 
       if (!res.ok) throw new Error("Save failed");
 
-      const data = await res.json();
-
-      // Update form with saved values to ensure they persist
-      if (data.bodyMetric) {
-        setKoerperForm({
-          gewicht: data.bodyMetric.gewicht ? String(data.bodyMetric.gewicht) : koerperForm.gewicht,
-          koerperfett: data.bodyMetric.koerperfett ? String(data.bodyMetric.koerperfett) : koerperForm.koerperfett,
-          brustumfang: data.bodyMetric.brustumfang ? String(data.bodyMetric.brustumfang) : koerperForm.brustumfang,
-          taillenumfang: data.bodyMetric.taillenumfang ? String(data.bodyMetric.taillenumfang) : koerperForm.taillenumfang,
-        });
-      }
+      // Refresh body metrics from API to ensure we have the latest data
+      await fetchKoerperdaten();
 
       toast.success("Körperdaten gespeichert!");
     } catch {

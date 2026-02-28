@@ -69,6 +69,7 @@ export async function GET(
           wiederholungen: sl.wiederholungen,
           rir: sl.rir,
           rpe: sl.rpe,
+          dauer: sl.dauer,
         })),
       })),
     };

@@ -9,6 +9,7 @@ interface SatzLogInput {
   rir: number | null;
   rpe: number | null;
   notiz: string | null;
+  dauer: number | null;
 }
 
 interface UebungLogInput {
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
                 rir: sl.rir,
                 rpe: sl.rpe,
                 notiz: sl.notiz,
+                dauer: sl.dauer,
               })),
             },
           })),
