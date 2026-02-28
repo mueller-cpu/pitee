@@ -33,14 +33,6 @@ interface TrainingPlan {
   einheiten: Einheit[];
 }
 
-interface WhoopData {
-  whoopRecovery: number;
-  whoopStrain: number | null;
-  whoopHRV: number | null;
-  whoopRestingHR: number | null;
-  schlafStunden: number;
-}
-
 const WOCHENTAGE = [
   "",
   "Montag",
@@ -59,27 +51,12 @@ export default function TrainingPage() {
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [whoopData, setWhoopData] = useState<WhoopData | null>(null);
   const [expandedEinheitId, setExpandedEinheitId] = useState<string | null>(null);
   const [einheitDetails, setEinheitDetails] = useState<Record<string, UebungDetail[]>>({});
 
   useEffect(() => {
     fetchPlan();
-    fetchWhoopData();
   }, []);
-
-  async function fetchWhoopData() {
-    try {
-      const res = await fetch("/api/wellness/save");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data?.whoopData) {
-        setWhoopData(data.whoopData);
-      }
-    } catch (err) {
-      console.error("WHOOP fetch error:", err);
-    }
-  }
 
   async function fetchPlan() {
     try {
@@ -205,19 +182,9 @@ export default function TrainingPage() {
   return (
     <div className="relative flex flex-col pt-0 pb-12 w-full">
       <header className="sticky top-0 z-40 bg-[#0a0c10]/80 ios-blur px-6 pt-6 pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-3xl neon-glow-blue">auto_awesome</span>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Training</h1>
-          </div>
-          {whoopData && (
-            <div className="bg-[#39ff14]/10 border border-[#39ff14]/30 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(57,255,20,0.1)]">
-              <span className="material-symbols-outlined text-[#39ff14] text-sm font-bold neon-glow-green">bolt</span>
-              <span className="text-[#39ff14] text-xs font-bold uppercase tracking-wider">
-                Recovery: {Math.round(whoopData.whoopRecovery)}%
-              </span>
-            </div>
-          )}
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-3xl neon-glow-blue">auto_awesome</span>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Training</h1>
         </div>
       </header>
 

@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -74,10 +72,6 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [whoopConnected, setWhoopConnected] = useState(false);
-  const [whoopSyncing, setWhoopSyncing] = useState(false);
-  const [whoopConnecting, setWhoopConnecting] = useState(false);
-  const { theme, setTheme } = useTheme();
 
   const [ernaehrungDialogOpen, setErnaehrungDialogOpen] = useState(false);
   const [ernaehrungForm, setErnaehrungForm] = useState({
@@ -133,30 +127,6 @@ export default function ProfilPage() {
         }
       })
       .catch((err) => console.error("Last body metrics error:", err));
-
-    fetch("/api/whoop/status")
-      .then((res) => {
-        if (!res.ok) {
-          return { connected: false };
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setWhoopConnected(data.connected || false);
-      })
-      .catch((err) => {
-        setWhoopConnected(false);
-      });
-
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("whoop_connected") === "true") {
-      toast.success("WHOOP erfolgreich verbunden und synchronisiert!");
-      setWhoopConnected(true);
-      window.history.replaceState({}, "", "/profil");
-    } else if (params.get("whoop_error")) {
-      toast.error("WHOOP-Verbindung fehlgeschlagen");
-      window.history.replaceState({}, "", "/profil");
-    }
   }, [router]);
 
   const handleSaveKoerperdaten = async () => {
@@ -192,59 +162,9 @@ export default function ProfilPage() {
     }
   };
 
-  const handleConnectWhoop = async () => {
-    setWhoopConnecting(true);
-    try {
-      const res = await fetch("/api/whoop/auth");
-      const data = await res.json();
-
-      if (data.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        throw new Error("No auth URL");
-      }
-    } catch {
-      toast.error("Fehler beim Verbinden mit WHOOP");
-      setWhoopConnecting(false);
-    }
-  };
-
-  const handleDisconnectWhoop = async () => {
-    try {
-      const res = await fetch("/api/whoop/disconnect", { method: "POST" });
-      if (!res.ok) throw new Error("Disconnect failed");
-
-      setWhoopConnected(false);
-      toast.success("WHOOP getrennt");
-    } catch {
-      toast.error("Fehler beim Trennen von WHOOP");
-    }
-  };
-
-  const handleSyncWhoop = async () => {
-    setWhoopSyncing(true);
-    try {
-      const res = await fetch("/api/whoop/sync", { method: "POST" });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Sync failed");
-      }
-
-      if (data.daysSync > 0) {
-        toast.success(`${data.daysSync} Tage synchronisiert`);
-      } else {
-        toast.info("Keine neuen Daten verfügbar");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Synchronisieren");
-    } finally {
-      setWhoopSyncing(false);
-    }
-  };
-
   const handleSaveErnaehrungseinstellungen = async () => {
     setSavingErnaehrung(true);
+    console.log("Saving Ernährungseinstellungen:", ernaehrungForm);
     try {
       const res = await fetch("/api/profil/ernaehrungseinstellungen", {
         method: "PATCH",
@@ -253,12 +173,16 @@ export default function ProfilPage() {
       });
 
       const data = await res.json();
+      console.log("API Response:", data);
 
-      if (!res.ok) throw new Error(data.error || "Save failed");
+      if (!res.ok) {
+        console.error("API Error:", data);
+        throw new Error(data.error || "Save failed");
+      }
 
       setUser((prev) => {
         if (!prev) return prev;
-        return {
+        const updated = {
           ...prev,
           profile: prev.profile
             ? {
@@ -268,11 +192,14 @@ export default function ProfilPage() {
             }
             : prev.profile,
         };
+        console.log("Updated user state:", updated);
+        return updated;
       });
 
       toast.success("Ernährungseinstellungen gespeichert!");
       setErnaehrungDialogOpen(false);
     } catch (error) {
+      console.error("Save error:", error);
       const message = error instanceof Error ? error.message : "Fehler beim Speichern.";
       toast.error(message);
     } finally {
@@ -514,79 +441,6 @@ export default function ProfilPage() {
                 {user.profile ? ERNAEHRUNGSWEISE_LABELS[user.profile.ernaehrungsweise] || user.profile.ernaehrungsweise : "--"}
               </span>
             </div>
-          </div>
-        </section>
-
-        {/* WHOOP Data Section */}
-        <section className="bg-[#161618] rounded-3xl p-6 border border-[#262629] relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#00FFC2]/10 p-2 rounded-lg">
-                <span className="material-symbols-outlined text-[#00FFC2]">sync_alt</span>
-              </div>
-              <h3 className="text-lg font-bold">WHOOP Data</h3>
-            </div>
-            {whoopConnected && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-[#00FFC2]/10 border border-[#00FFC2]/20 rounded-full">
-                <div className="h-1.5 w-1.5 bg-[#00FFC2] rounded-full animate-pulse shadow-[0_0_8px_#00FFC2]"></div>
-                <span className="text-[9px] font-black text-[#00FFC2] uppercase tracking-widest">Active</span>
-              </div>
-            )}
-          </div>
-
-          {whoopConnected ? (
-            <>
-              <button
-                onClick={handleSyncWhoop}
-                disabled={whoopSyncing}
-                className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 border border-white/10 transition-all"
-              >
-                <span className={cn("material-symbols-outlined text-sm", whoopSyncing && "animate-spin")}>refresh</span>
-                <span className="text-sm uppercase tracking-widest">
-                  {whoopSyncing ? "Synchronisiere..." : "Jetzt synchronisieren"}
-                </span>
-              </button>
-              <div className="mt-4 text-center">
-                <button
-                  onClick={handleDisconnectWhoop}
-                  className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-[#FF3B30] transition-colors"
-                >
-                  Verbindung trennen
-                </button>
-              </div>
-            </>
-          ) : (
-            <button
-              onClick={handleConnectWhoop}
-              disabled={whoopConnecting}
-              className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 border border-white/10 transition-all"
-            >
-              <span className="material-symbols-outlined text-sm">watch</span>
-              <span className="text-sm uppercase tracking-widest">
-                {whoopConnecting ? "Verbinde..." : "Mit WHOOP verbinden"}
-              </span>
-            </button>
-          )}
-        </section>
-
-        {/* Erscheinungsbild Section */}
-        <section className="space-y-4">
-          <h3 className="text-xs font-black tracking-[0.2em] text-slate-500 uppercase">Erscheinungsbild</h3>
-          <div className="flex p-1.5 bg-[#161618] rounded-2xl border border-[#262629]">
-            <button
-              onClick={() => setTheme("light")}
-              className={cn("flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all", theme !== "dark" ? "bg-white/10 text-primary shadow-inner" : "text-slate-500")}
-            >
-              <span className="material-symbols-outlined text-xl">light_mode</span>
-              <span className="text-xs uppercase tracking-widest">Light</span>
-            </button>
-            <button
-              onClick={() => setTheme("dark")}
-              className={cn("flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all", theme === "dark" ? "bg-white/10 text-primary shadow-inner" : "text-slate-500")}
-            >
-              <span className="material-symbols-outlined text-xl">dark_mode</span>
-              <span className="text-xs uppercase tracking-widest">Dark</span>
-            </button>
           </div>
         </section>
 

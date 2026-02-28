@@ -9,21 +9,10 @@ interface UserData {
   hasFitnessTest: boolean;
 }
 
-interface WhoopData {
-  whoopRecovery: number;
-  whoopStrain: number | null;
-  whoopHRV: number | null;
-  whoopRestingHR: number | null;
-  schlafStunden: number;
-  whoopSyncedAt: Date;
-}
-
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [whoopData, setWhoopData] = useState<WhoopData | null>(null);
-  const [whoopConnected, setWhoopConnected] = useState(false);
   const [todayTrainingName, setTodayTrainingName] = useState<string | null>(null);
   const [nextMealName, setNextMealName] = useState<string | null>(null);
 
@@ -45,19 +34,6 @@ export default function DashboardPage() {
         }
       })
       .finally(() => setLoading(false));
-
-    // Fetch WHOOP data
-    fetch("/api/wellness/save")
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data?.whoopData) {
-          setWhoopData(data.whoopData);
-        }
-        if (data?.whoopConnected !== undefined) {
-          setWhoopConnected(data.whoopConnected);
-        }
-      })
-      .catch((err) => console.error("WHOOP fetch error:", err));
 
     // Fetch Training Plan
     fetch("/api/training/plan")
@@ -115,12 +91,6 @@ export default function DashboardPage() {
 
   const firstName = user.name.split(' ')[0];
 
-  const getRecoveryLabel = (recovery: number) => {
-    if (recovery >= 67) return "ERHOLT";
-    if (recovery >= 34) return "MODERAT";
-    return "ERSCHÖPFT";
-  };
-
   const quickActions = [
     {
       title: "Heutiges Training",
@@ -173,72 +143,6 @@ export default function DashboardPage() {
         </h1>
         <p className="text-slate-500 text-lg mt-2 font-medium">Was steht heute an?</p>
       </div>
-
-      {/* WHOOP Score Card */}
-      {whoopConnected && whoopData && (
-        <div className="px-6 mb-10">
-          <div className="bg-[#121212] rounded-[2.5rem] p-8 border border-white/5 relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-            <div className="absolute -top-24 -right-24 size-64 bg-primary/10 rounded-full blur-[80px]"></div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-10">
-                <div className="flex flex-col">
-                  <span className="text-slate-500 text-xs font-bold uppercase tracking-[0.15em] mb-1">Tages-Score</span>
-                  <div className="flex items-center gap-4">
-                    <span className="text-neon text-7xl font-extrabold tracking-tighter">
-                      {whoopData ? Math.round(whoopData.whoopRecovery) : "--"}
-                      <span className="text-3xl font-bold ml-1">%</span>
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="bg-primary text-black px-4 py-1.5 rounded-full font-bold text-sm mb-2 uppercase">
-                    {whoopData ? getRecoveryLabel(whoopData.whoopRecovery) : "Lädt"}
-                  </div>
-                  <span className="material-symbols-outlined text-primary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/[0.03] rounded-3xl p-5 border border-white/[0.05]">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="material-symbols-outlined text-blue-500 text-xl">dark_mode</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Schlaf</span>
-                  </div>
-                  <p className="text-xl font-bold text-white tracking-tight">
-                    {whoopData?.schlafStunden || "--"}<span className="text-sm ml-1 text-slate-400">h</span>
-                  </p>
-                </div>
-                <div className="bg-white/[0.03] rounded-3xl p-5 border border-white/[0.05]">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="material-symbols-outlined text-primary text-xl">vital_signs</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">HRV</span>
-                  </div>
-                  <p className="text-xl font-bold text-white tracking-tight">
-                    {whoopData?.whoopHRV || "--"}<span className="text-sm ml-1 text-slate-400">ms</span>
-                  </p>
-                </div>
-                <div className="bg-white/[0.03] rounded-3xl p-5 border border-white/[0.05]">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="material-symbols-outlined text-red-500 text-xl">favorite</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Puls</span>
-                  </div>
-                  <p className="text-xl font-bold text-white tracking-tight">
-                    {whoopData?.whoopRestingHR || "--"}<span className="text-sm ml-1 text-slate-400">bpm</span>
-                  </p>
-                </div>
-                <div className="bg-white/[0.03] rounded-3xl p-5 border border-white/[0.05]">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="material-symbols-outlined text-orange-400 text-xl">monitoring</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Strain</span>
-                  </div>
-                  <p className="text-xl font-bold text-white tracking-tight">
-                    {whoopData?.whoopStrain?.toFixed(1) || "--"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Daily Actions */}
       <div className="px-6 space-y-4">
