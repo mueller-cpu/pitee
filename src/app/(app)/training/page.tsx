@@ -98,6 +98,7 @@ export default function TrainingPage() {
         throw new Error("Fehler beim Laden");
       }
       const data = await res.json();
+      console.log("Fetched plan:", data.plan?.id, data.plan?.name, "istAktiv:", data.plan?.istAktiv);
       setPlan(data.plan);
     } catch {
       toast.error("Trainingsplan konnte nicht geladen werden.");
@@ -111,6 +112,8 @@ export default function TrainingPage() {
       const res = await fetch("/api/training/plans");
       if (!res.ok) return;
       const data = await res.json();
+      console.log("Fetched all plans:", data.plans?.length, "plans");
+      console.log("Active plan:", data.plans?.find((p: PlanListItem) => p.istAktiv)?.name);
       setAllPlans(data.plans || []);
     } catch (err) {
       console.error("Error fetching all plans:", err);
@@ -120,6 +123,8 @@ export default function TrainingPage() {
   async function handleSwitchPlan(planId: string) {
     try {
       setSwitching(true);
+      console.log("Switching to plan:", planId);
+
       const res = await fetch("/api/training/switch-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,14 +132,20 @@ export default function TrainingPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Fehler beim Wechseln des Plans");
+        const data = await res.json();
+        throw new Error(data.error || "Fehler beim Wechseln des Plans");
       }
 
-      toast.success("Plan wurde gewechselt!");
+      const result = await res.json();
+      console.log("Switch successful:", result);
+
+      toast.success("Plan wurde erfolgreich gewechselt!");
       setShowPlanSelector(false);
-      await fetchPlan();
-      await fetchAllPlans();
+
+      // Refetch both plan and all plans
+      await Promise.all([fetchPlan(), fetchAllPlans()]);
     } catch (error) {
+      console.error("Switch plan error:", error);
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
       toast.error(message);
     } finally {
@@ -372,7 +383,8 @@ export default function TrainingPage() {
       {showPlanSelector && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end" onClick={() => setShowPlanSelector(false)}>
           <div
-            className="w-full bg-[#0F0F12] rounded-t-3xl border-t border-white/10 max-h-[80vh] overflow-y-auto"
+            className="w-full bg-[#0F0F12] rounded-t-3xl border-t border-white/10 max-h-[85vh] overflow-y-scroll"
+            style={{ WebkitOverflowScrolling: 'touch' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-[#0F0F12] z-10 px-6 pt-6 pb-4 border-b border-white/5">
@@ -388,7 +400,7 @@ export default function TrainingPage() {
               <p className="text-sm text-slate-400">Wähle einen Plan aus, um ihn zu aktivieren</p>
             </div>
 
-            <div className="px-6 py-4 space-y-3">
+            <div className="px-6 py-4 pb-8 space-y-3">
               {allPlans.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-slate-500">Keine weiteren Pläne verfügbar</p>
@@ -420,11 +432,11 @@ export default function TrainingPage() {
                             </div>
                           )}
                         </div>
-                        <p className="text-sm text-slate-400">
+                        <p className="text-sm text-slate-400 mb-1">
                           Woche {p.woche} • {p.anzahlEinheiten} Einheiten{p.istDeload ? " • Deload" : ""}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {new Date(p.startDatum).toLocaleDateString("de-DE")} - {new Date(p.endDatum).toLocaleDateString("de-DE")}
+                        <p className="text-xs text-slate-500">
+                          Laufzeit: {new Date(p.startDatum).toLocaleDateString("de-DE", { day: '2-digit', month: '2-digit' })} - {new Date(p.endDatum).toLocaleDateString("de-DE", { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </p>
                       </div>
                       {!p.istAktiv && (

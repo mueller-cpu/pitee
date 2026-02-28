@@ -22,6 +22,20 @@ function loadResearchMarkdown(geschlecht: "maennlich" | "weiblich"): string {
   }
 }
 
+/**
+ * Lädt die personalisierte Ernährungs-Referenzdatei
+ * @returns Inhalt der Nutrition-Reference-Markdown-Datei
+ */
+function loadNutritionReference(): string {
+  try {
+    const filePath = path.join(process.cwd(), "nutrition-reference-volker.md");
+    return fs.readFileSync(filePath, "utf-8");
+  } catch (error) {
+    console.error("Fehler beim Laden der Nutrition-Reference-Datei:", error);
+    return "";
+  }
+}
+
 // ─── Trainingsplan-Generierung ──────────────────────────────────────
 
 /**
@@ -256,12 +270,65 @@ ${proteinSection}
 
 ${kalorienSection}
 
-### Mahlzeiten-Timing
-- Post-Workout: Innerhalb von 2h nach dem Training, proteinreich (40g+), kohlenhydratreich
-- Vor dem Schlafen: Casein-reiches Protein (z.B. ${ernaehrungsweise === "vegan" ? "Sojajoghurt" : "Magerquark"}) zur Nachtversorgung
-- Gleichmäßige Verteilung über den Tag (alle 3-4 Stunden Protein)
+### Mahlzeiten-Struktur & Timing (4 Mahlzeiten empfohlen)
+
+Wenn der User 4 Mahlzeiten präferiert, verwende DIESE optimierte Struktur:
+
+1. **Snack am Vormittag (10-11 Uhr)** - ersetzt klassisches Frühstück
+   - Kalorien: 400-550 kcal
+   - Protein: 25-40g, Leucin: 2.5-3g+
+   - **WICHTIG: Kaffee (~30 kcal) erst NACH diesem Snack - NICHT auf leeren Magen!**
+   - Beispiele: Skyr-Bowl (200g Skyr, 20g Whey, Beeren, Honig), Protein-Pancakes (2 Eier, 30g Whey, 40g Haferflocken), Joghurt+Beeren+Whey, Rührei+Vollkornbrot
+
+2. **Hauptmahlzeit um 14:00 Uhr** (Meal Prep)
+   - Kalorien: 800-1000 kcal
+   - Protein: 55-70g, Leucin: 3g+
+   - **MUSS Meal-Prep geeignet sein** (am Vortag vorbereitbar, transportabel)
+   - Beispiele: Hähnchenfilet mit Süßkartoffeln+Brokkoli, Couscous-Bowl mit Kürbis & Hähnchen, Garnelen mit Kartoffeln & Wirsing, One-Pot Vollkornnudeln+Hähnchen, Nasi Goreng+Hähnchen
+
+3. **Kleiner Snack (16-17 Uhr)**
+   - Kalorien: 200-350 kcal
+   - Protein: 8-25g
+   - Leicht, schnell, einfach
+   - Beispiele: Protein-Joghurt+Nüsse (200g griech. Joghurt, 15g Nüsse), Karottensticks mit Hummus (200g Karotten, 40-50g Hummus), Griechischer Joghurt mit Beeren
+
+4. **Große Abendmahlzeit (19-20 Uhr)** - zu Hause gekocht
+   - Kalorien: 900-1200 kcal
+   - Protein: 70-90g, Leucin: 3g+
+   - Frisch zubereitet, sättigend, proteinreich
+   - Beispiele: Pasta mit Rinderhack+Gemüse, Thai-Curry mit Garnelen, Hähnchen-Gemüse-Pfanne mit Quinoa, Rindersteak+Kartoffeln, Chili sin Carne+Reis
+
+**Post-Workout-Timing:** Falls Training, ist entweder die 14-Uhr-Mahlzeit ODER Abendmahlzeit die Post-Workout-Mahlzeit (innerhalb 2h nach Training, 40g+ Protein, 3g+ Leucin, kohlenhydratreich)
 ${besonderheiten}
 ${ernaehrungsweisenText}
+
+### Rezept-Vielfalt & Abwechslung
+
+**Protein-Quellen rotieren:**
+- Hähnchenbrust (häufigste Wahl) - 150-250g
+- Mageres Rinderhack - 200g
+- Rindersteak (mager) - 250-300g
+- Garnelen - 200g
+- Eier - 2-3 Stück
+- Griechischer Joghurt/Skyr/Magerquark - 200-250g
+- Whey Protein - 20-30g (vor allem Vormittag-Snack)
+- Hülsenfrüchte (Kidneybohnen, Kichererbsen) als Ergänzung
+
+**Kohlenhydrat-Quellen rotieren:**
+- Süßkartoffeln (250-300g), Kartoffeln (250-300g)
+- Vollkornnudeln (70-80g trocken), Basmati Reis (60-80g trocken)
+- Couscous (80g), Quinoa (80g)
+- Haferflocken (40-50g), Vollkornbrot (1-2 Scheiben)
+
+**Gemüse täglich variieren:**
+- Brokkoli (200-300g), Zucchini (50-200g), Paprika (150-200g)
+- Tomaten (passierte/Cherry, 150-200g), Karotten (200g)
+- Kürbis Hokkaido (150g), Wirsing (150g), Rucola/Salat (50-100g)
+
+**Fette & Öle:**
+- Olivenöl (1-2.5 TL pro Mahlzeit, ~5-12ml) - HAUPTFETTQUELLE
+- Nüsse (Mandeln, Walnüsse, 15g)
+- Kochsahne 15% (75ml), Kokosmilch light (100-150ml)
 
 ## User-Präferenzen
 - **Anzahl Mahlzeiten:** ${anzahlMahlzeiten} Mahlzeiten pro Tag (GENAU diese Anzahl verwenden!)
@@ -269,44 +336,111 @@ ${ernaehrungsweisenText}
 
 ## Ausgabeformat
 
-Antworte als valides JSON in einem Markdown-Codeblock:
+Antworte als valides JSON in einem Markdown-Codeblock.
+
+**Bei 4 Mahlzeiten verwende diese Struktur:**
 
 \`\`\`json
 {
-  "kalorien": 2200,
-  "proteinG": 160,
-  "kohlenhydrateG": 220,
-  "fettG": 75,
-  "leucinG": 12.5,
+  "kalorien": 2900,
+  "proteinG": 210,
+  "kohlenhydrateG": 280,
+  "fettG": 85,
+  "leucinG": 14.0,
   "mahlzeiten": [
     {
-      "name": "Frühstück",
-      "uhrzeit": "07:00",
-      "kalorien": 500,
-      "proteinG": 40,
+      "name": "Snack am Vormittag",
+      "uhrzeit": "10:30",
+      "kalorien": 450,
+      "proteinG": 35,
       "kohlenhydrateG": 45,
-      "fettG": 18,
+      "fettG": 12,
       "leucinG": 3.0,
-      "rezept": "3 Eier als Rührei, 2 Scheiben Vollkornbrot, 100g Magerquark mit Beeren",
+      "rezept": "200g Skyr, 20g Whey-Protein Vanille, 100g Beeren (TK oder frisch), 1 TL Honig. Skyr mit Whey verrühren, Beeren + Honig toppen.",
+      "istPostWorkout": false
+    },
+    {
+      "name": "Hauptmahlzeit (Meal Prep)",
+      "uhrzeit": "14:00",
+      "kalorien": 900,
+      "proteinG": 65,
+      "kohlenhydrateG": 90,
+      "fettG": 25,
+      "leucinG": 3.5,
+      "rezept": "250g Hähnchenfilet, 300g Süßkartoffeln, 200g Brokkoli, 1 EL Olivenöl (~10ml), Salz, Pfeffer. Hähnchen würzen & in Pfanne braten. Süßkartoffeln würfeln, mit Öl + Gewürzen im Ofen 25 Min. bei 200°C. Brokkoli dämpfen. In Tupperbox packen.",
+      "istPostWorkout": true
+    },
+    {
+      "name": "Snack am Nachmittag",
+      "uhrzeit": "16:30",
+      "kalorien": 300,
+      "proteinG": 20,
+      "kohlenhydrateG": 25,
+      "fettG": 12,
+      "leucinG": 2.5,
+      "rezept": "200g griechischer Joghurt fettarm, 15g Nüsse (Mandeln/Walnüsse), 1 TL Honig. Joghurt in Schüssel, Nüsse hacken und drüberstreuen, Honig nach Geschmack.",
+      "istPostWorkout": false
+    },
+    {
+      "name": "Abendmahlzeit",
+      "uhrzeit": "19:30",
+      "kalorien": 1100,
+      "proteinG": 85,
+      "kohlenhydrateG": 95,
+      "fettG": 32,
+      "leucinG": 4.0,
+      "rezept": "80g Vollkornnudeln (Trockengewicht), 200g mageres Rinderhack, 200g passierte Tomaten, 1 Zwiebel, 100g Zucchini, 1 TL Olivenöl, ital. Kräuter, Salz, Pfeffer. Nudeln kochen. Zwiebel + Hack anbraten, Tomaten + Gemüse + Gewürze dazu, 10 Min. köcheln. Mit Nudeln servieren.",
       "istPostWorkout": false
     }
   ]
 }
 \`\`\`
 
+**Bei anderer Mahlzeitenanzahl:** Passe Namen und Uhrzeiten entsprechend an (z.B. 3 Mahlzeiten: Frühstück 08:00, Mittagessen 13:00, Abendessen 19:00)
+
 ## Regeln
+
 1. **GENAU ${anzahlMahlzeiten} Mahlzeiten** erstellen (nicht mehr, nicht weniger!)
-2. Jede Mahlzeit muss mind. ${geschlecht === "weiblich" ? "30g" : "25g"} Protein enthalten
-3. Post-Workout-Mahlzeit mit mind. 40g Protein und 3g+ Leucin
-4. ${ernaehrungsweise === "vegetarisch" ? "KEINE Fleisch- oder Fischprodukte verwenden" : ernaehrungsweise === "vegan" ? "KEINE tierischen Produkte (kein Fleisch, Fisch, Eier, Milchprodukte)" : "Alle Lebensmittel erlaubt"}
-5. ${geschlecht === "weiblich" ? "Mediterrane Ernährung als Basis (Gemüse, Obst, Hülsenfrüchte, Vollkorn, Olivenöl, Fisch falls erlaubt, Nüsse)" : "Rezepte sollen einfach und alltagstauglich sein"}
-6. Deutsche Lebensmittel und Maße verwenden
-7. Auf Nahrungsmittelunverträglichkeiten achten
-8. Antworte NUR mit dem JSON-Codeblock
+
+2. **Jede Mahlzeit mind. ${geschlecht === "weiblich" ? "30g" : "25g"} Protein** und 2.5g+ Leucin
+
+3. **Post-Workout-Mahlzeit** (falls Trainingstag): 40g+ Protein, 3g+ Leucin, kohlenhydratreich
+
+4. **Meal-Prep-Tauglichkeit:** Die 14-Uhr-Hauptmahlzeit MUSS am Vortag vorbereitbar und in Tupperbox transportabel sein
+
+5. **Abwechslung & Vielfalt:**
+   - Rotiere Proteinquellen (nicht jeden Tag Hähnchen!)
+   - Variiere Kohlenhydrate (Süßkartoffeln, Kartoffeln, Vollkornnudeln, Reis, Quinoa, Couscous)
+   - Wechsle Gemüsesorten täglich (mind. 2-3 verschiedene Gemüse pro Tag)
+   - Nutze verschiedene Zubereitungsarten (gebraten, im Ofen, gedämpft, als Bowl, als Pfanne, als Pasta, als Curry)
+
+6. **Einfachheit & Alltagstauglichkeit:**
+   - Rezepte mit max. 8-10 Zutaten
+   - Klare, kurze Zubereitungsanweisungen
+   - Gängige deutsche Lebensmittel (im Supermarkt erhältlich)
+   - Realistische Portionsgrößen mit EXAKTEN Grammangaben
+
+7. **Olivenöl als Hauptfettquelle:** 1-2.5 TL (~5-12ml) pro Mahlzeit zum Braten/Anmachen
+
+8. ${ernaehrungsweise === "vegetarisch" ? "**KEINE Fleisch- oder Fischprodukte** verwenden" : ernaehrungsweise === "vegan" ? "**KEINE tierischen Produkte** (kein Fleisch, Fisch, Eier, Milchprodukte)" : "**Alle Lebensmittel erlaubt**"}
+
+9. ${geschlecht === "weiblich" ? "**Mediterrane Ernährung** als Basis (Gemüse, Obst, Hülsenfrüchte, Vollkorn, Olivenöl, Fisch falls erlaubt, Nüsse)" : "**Ausgewogene Ernährung** mit viel Gemüse, Vollkorn, magerem Protein"}
+
+10. **Deutsche Lebensmittel und Maße** (Gramm, ml, TL, EL) verwenden
+
+11. **Nahrungsmittelunverträglichkeiten** aus dem User-Kontext beachten
+
+12. **Rezept-Format:** "Zutaten mit Mengen + kurze Zubereitung" (z.B. "250g Hähnchenfilet, 300g Süßkartoffeln, 200g Brokkoli, 1 TL Olivenöl. Hähnchen würzen & braten. Süßkartoffeln im Ofen 25 Min. bei 200°C. Brokkoli dämpfen.")
+
+13. **Antworte NUR mit dem JSON-Codeblock** - kein zusätzlicher Text!
 
 ## Wissenschaftliche Forschungsgrundlagen
 
-${loadResearchMarkdown(geschlecht) ? `\n${loadResearchMarkdown(geschlecht)}\n` : ""}`;
+${loadResearchMarkdown(geschlecht) ? `\n${loadResearchMarkdown(geschlecht)}\n` : ""}
+
+## Personalisierte Rezept-Referenz & Meal-Prep-Ideen
+
+${loadNutritionReference() ? `\n${loadNutritionReference()}\n` : ""}`;
 }
 
 // Backwards compatibility: Default auf Männer

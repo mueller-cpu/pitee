@@ -38,19 +38,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Log the switch attempt
+    console.log(`User ${user.id} switching to plan ${planId}`);
+
     // Deactivate all plans for this user
-    await prisma.trainingPlan.updateMany({
+    const deactivated = await prisma.trainingPlan.updateMany({
       where: { userId: user.id },
       data: { istAktiv: false },
     });
+    console.log(`Deactivated ${deactivated.count} plans`);
 
     // Activate the selected plan
-    await prisma.trainingPlan.update({
+    const activated = await prisma.trainingPlan.update({
       where: { id: planId },
       data: { istAktiv: true },
     });
+    console.log(`Activated plan: ${activated.id} (${activated.name})`);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      planId: activated.id,
+      planName: activated.name
+    });
   } catch (error) {
     console.error("Switch plan error:", error);
     return NextResponse.json(
