@@ -25,17 +25,6 @@ interface TrainingPlan {
   einheiten: Einheit[];
 }
 
-interface PlanListItem {
-  id: string;
-  name: string;
-  woche: number;
-  istAktiv: boolean;
-  istDeload: boolean;
-  startDatum: string;
-  endDatum: string;
-  anzahlEinheiten: number;
-}
-
 interface WhoopData {
   whoopRecovery: number;
   whoopStrain: number | null;
@@ -60,16 +49,12 @@ const WOCHENTAGE_KURZ = ["", "MO", "DI", "MI", "DO", "FR", "SA", "SO"];
 export default function TrainingPage() {
   const router = useRouter();
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
-  const [allPlans, setAllPlans] = useState<PlanListItem[]>([]);
-  const [showPlanSelector, setShowPlanSelector] = useState(false);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [switching, setSwitching] = useState(false);
   const [whoopData, setWhoopData] = useState<WhoopData | null>(null);
 
   useEffect(() => {
     fetchPlan();
-    fetchAllPlans();
     fetchWhoopData();
   }, []);
 
@@ -107,52 +92,6 @@ export default function TrainingPage() {
     }
   }
 
-  async function fetchAllPlans() {
-    try {
-      const res = await fetch("/api/training/plans");
-      if (!res.ok) return;
-      const data = await res.json();
-      console.log("Fetched all plans:", data.plans?.length, "plans");
-      console.log("Active plan:", data.plans?.find((p: PlanListItem) => p.istAktiv)?.name);
-      setAllPlans(data.plans || []);
-    } catch (err) {
-      console.error("Error fetching all plans:", err);
-    }
-  }
-
-  async function handleSwitchPlan(planId: string) {
-    try {
-      setSwitching(true);
-      console.log("Switching to plan:", planId);
-
-      const res = await fetch("/api/training/switch-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Fehler beim Wechseln des Plans");
-      }
-
-      const result = await res.json();
-      console.log("Switch successful:", result);
-
-      toast.success("Plan wurde erfolgreich gewechselt!");
-      setShowPlanSelector(false);
-
-      // Refetch both plan and all plans
-      await Promise.all([fetchPlan(), fetchAllPlans()]);
-    } catch (error) {
-      console.error("Switch plan error:", error);
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      toast.error(message);
-    } finally {
-      setSwitching(false);
-    }
-  }
-
   async function handleGeneratePlan() {
     try {
       setGenerating(true);
@@ -163,7 +102,6 @@ export default function TrainingPage() {
       }
       toast.success("Trainingsplan wurde erstellt!");
       await fetchPlan();
-      await fetchAllPlans();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unbekannter Fehler";
@@ -250,15 +188,6 @@ export default function TrainingPage() {
               Woche {plan.woche} – <span className="text-slate-400">{plan.name}</span>
             </h2>
           </div>
-          {allPlans.length > 1 && (
-            <button
-              onClick={() => setShowPlanSelector(true)}
-              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition-all active:scale-95"
-            >
-              <span className="material-symbols-outlined text-white text-lg">swap_horiz</span>
-              <span className="text-white font-bold text-xs tracking-wider uppercase">Wechseln</span>
-            </button>
-          )}
         </div>
 
         {nextWorkout && (
@@ -379,77 +308,6 @@ export default function TrainingPage() {
         </button>
       </div>
 
-      {/* Plan Selector Modal */}
-      {showPlanSelector && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end" onClick={() => setShowPlanSelector(false)}>
-          <div
-            className="w-full bg-[#0F0F12] rounded-t-3xl border-t border-white/10 max-h-[85vh] overflow-y-scroll"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-[#0F0F12] z-10 px-6 pt-6 pb-4 border-b border-white/5">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xl font-bold text-white">Trainingsplan wechseln</h3>
-                <button
-                  onClick={() => setShowPlanSelector(false)}
-                  className="p-2 hover:bg-white/5 rounded-full transition-colors"
-                >
-                  <span className="material-symbols-outlined text-slate-400">close</span>
-                </button>
-              </div>
-              <p className="text-sm text-slate-400">Wähle einen Plan aus, um ihn zu aktivieren</p>
-            </div>
-
-            <div className="px-6 py-4 pb-8 space-y-3">
-              {allPlans.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-slate-500">Keine weiteren Pläne verfügbar</p>
-                </div>
-              ) : (
-                allPlans.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => !p.istAktiv && !switching && handleSwitchPlan(p.id)}
-                    className={cn(
-                      "p-5 rounded-2xl border transition-all",
-                      p.istAktiv
-                        ? "bg-primary/10 border-primary/30 cursor-default"
-                        : "bg-white/5 border-white/10 cursor-pointer hover:bg-white/10 active:scale-[0.98]",
-                      switching && "opacity-50 pointer-events-none"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h4 className="text-white font-bold text-lg">{p.name}</h4>
-                          {p.istAktiv && (
-                            <div className="flex items-center gap-1 bg-primary/20 px-2 py-0.5 rounded-full">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-                              </span>
-                              <span className="text-primary font-bold text-[9px] tracking-wider uppercase">Aktiv</span>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-400 mb-1">
-                          Woche {p.woche} • {p.anzahlEinheiten} Einheiten{p.istDeload ? " • Deload" : ""}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          Laufzeit: {new Date(p.startDatum).toLocaleDateString("de-DE", { day: '2-digit', month: '2-digit' })} - {new Date(p.endDatum).toLocaleDateString("de-DE", { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                        </p>
-                      </div>
-                      {!p.istAktiv && (
-                        <span className="material-symbols-outlined text-slate-600">chevron_right</span>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
