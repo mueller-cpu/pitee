@@ -37,7 +37,10 @@ export function getTrainingPlanSystemPrompt(geschlecht: "maennlich" | "weiblich"
   // Geschlechtsspezifische Parameter
   const specificParams = geschlecht === "weiblich"
     ? `### Trainingsparameter für Frauen 50+
-- **Intensität (RIR):** 2-3 Wiederholungen in Reserve (konservativer als bei Männern)
+- **Intensität (RIR):** 1-3 Wiederholungen in Reserve
+  - Die meisten Sätze: RIR 2-3 (sicher und effektiv)
+  - Optional letzter Satz einer Übung: RIR 1 (näher ans Versagen für maximale Hypertrophie)
+  - Aktuelle Forschung zeigt: RIR 1-2 bietet optimales Nutzen/Risiko-Verhältnis für 50+
 - **Progressive Overload:** Langsamer als bei Männern. Gewicht um +1.25-2 kg erhöhen.
 - **Tempo:** Standardmäßig 3-1-2-0 (kontrolliert, NICHT explosiv - Gelenkschutz wichtiger)
 - **Pausen:** 90-120 Sekunden zwischen Sätzen
@@ -57,7 +60,11 @@ export function getTrainingPlanSystemPrompt(geschlecht: "maennlich" | "weiblich"
 - **Cardio-Integration:** 150 Min/Woche moderate Intensität für Herzgesundheit (erhöhtes kardiovaskuläres Risiko nach Menopause)
 - **Maschinen bevorzugen:** Bei Gelenkproblemen noch häufiger zu Maschinen greifen`
     : `### Trainingsparameter für Männer 50+
-- **Intensität (RIR):** 2-3 Wiederholungen in Reserve (Reps in Reserve)
+- **Intensität (RIR):** 1-2 Wiederholungen in Reserve (Reps in Reserve)
+  - Die meisten Sätze: RIR 1-2 (optimal für Hypertrophie)
+  - Letzter Satz einer Übung: RIR 0-1 (technisches Versagen möglich)
+  - Aktuelle Meta-Analysen (2024) zeigen: Nähe zum Muskelversagen ist entscheidend für maximale Hypertrophie
+  - WICHTIG: Bei Gelenkproblemen konservativer bleiben (RIR 2-3)
 - **Progressive Overload:** Gewicht um +2.5 kg erhöhen bei Compound-Übungen, +1.25 kg bei Isolation
 - **Tempo:** Standardmäßig 3-1-2-0 (3s exzentrisch, 1s Pause, 2s konzentrisch, 0s Pause oben)
 - **Pausen:** 120 Sekunden zwischen Sätzen für Compound, 90 Sekunden für Isolation
@@ -124,7 +131,7 @@ Halte dich EXAKT an dieses Schema:
           "saetze": 3,
           "wiederholungen": "8-12",
           "gewicht": null,
-          "rir": 2,
+          "rir": 1,
           "pauseSekunden": 120,
           "tempo": "3-1-2-0",
           "notizen": "Optionale Hinweise zur Ausführung${geschlecht === "weiblich" ? " + Beckenboden-Cue bei Compound-Übungen" : ""}"
@@ -209,7 +216,7 @@ export function getNutritionPlanSystemPrompt(
   - Niedrig-glykämische Kohlenhydrate bevorzugen
   - Protein zu JEDER Mahlzeit (20-30g bereits zum Frühstück)
 - **Calcium + Vitamin D:** 1.000-1.200 mg Calcium/Tag + 1.000-2.000 IE Vitamin D (Osteoporose-Prävention)
-- **Kreatin:** 3-5g/Tag (Frauen haben von Natur aus niedrigere Speicher + kognitive Vorteile)
+- **Kreatin:** 0.1g pro kg Körpergewicht täglich (ca. 7-10g für 70-100kg) - aktuelle Studien zeigen optimale Dosierung (Frauen haben von Natur aus niedrigere Speicher + kognitive Vorteile)
 - **Omega-3:** 1.000 mg EPA+DHA/Tag (antiinflammatorisch, kardioprotektiv)
 - **Magnesium:** 300-400 mg/Tag (Schlaf, Muskelkrämpfe, Knochen)
 - **KEIN Eisen-Supplement:** Bedarf sinkt nach Menopause auf 8 mg/Tag (wie Männer)

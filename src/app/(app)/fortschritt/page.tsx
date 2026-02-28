@@ -44,21 +44,11 @@ interface VolumenEintrag {
   volumen: number;
 }
 
-interface WellnessEintrag {
-  datum: string;
-  schlafStunden: number | null;
-  schlafQualitaet: number | null;
-  energie: number | null;
-  stress: number | null;
-  muskelkater: number | null;
-  stimmung: number | null;
-}
 
 interface FortschrittData {
   kraftDaten: KraftDaten[];
   koerperDaten: KoerperEintrag[];
   volumenDaten: VolumenEintrag[];
-  wellnessDaten: WellnessEintrag[];
 }
 
 // ── Colors matching the new design ──
@@ -73,7 +63,6 @@ const TABS = [
   { key: "kraft", label: "Kraft" },
   { key: "koerper", label: "Körper" },
   { key: "volumen", label: "Volumen" },
-  { key: "wellness", label: "Wellness" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -317,51 +306,6 @@ function VolumenTab({ data }: { data: VolumenEintrag[] }) {
   );
 }
 
-// ── Wellness Tab ──
-function WellnessTab({ data }: { data: WellnessEintrag[] }) {
-  if (data.length === 0) return <EmptyState message="Noch keine Wellness-Daten vorhanden." />;
-
-  const avgSchlaf = data.filter(d => d.schlafQualitaet).reduce((s, d) => s + (d.schlafQualitaet ?? 0), 0) / (data.filter(d => d.schlafQualitaet).length || 1);
-  const avgEnergie = data.filter(d => d.energie).reduce((s, d) => s + (d.energie ?? 0), 0) / (data.filter(d => d.energie).length || 1);
-
-  return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#0F0F12] border border-white/5 p-5 rounded-2xl">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Ø Schlafqualität</p>
-          <p className="text-3xl font-black mt-1 text-[#00F5FF] tabular-nums">
-            {avgSchlaf.toFixed(1)} <span className="text-sm font-medium text-slate-500">/5</span>
-          </p>
-        </div>
-        <div className="bg-[#0F0F12] border border-white/5 p-5 rounded-2xl">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Ø Energie</p>
-          <p className="text-3xl font-black mt-1 text-[#39FF14] tabular-nums">
-            {avgEnergie.toFixed(1)} <span className="text-sm font-medium text-slate-500">/5</span>
-          </p>
-        </div>
-      </div>
-
-      <section className="space-y-4">
-        <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Wellness Trends</h3>
-        <div className="relative h-48 w-full bg-[#0F0F12] rounded-2xl border border-white/5 p-4 overflow-hidden">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="datum" tickFormatter={(v) => new Date(v).getDate().toString()} tick={{ fontSize: 10, fill: "#475569", fontWeight: 800 }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 10, fill: "#475569" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="schlafQualitaet" stroke="#00F5FF" strokeWidth={3} dot={false} name="Schlaf" className="chart-glow-blue" />
-              <Line type="monotone" dataKey="energie" stroke="#39FF14" strokeWidth={3} dot={false} name="Energie" className="chart-glow-green" />
-              <Line type="monotone" dataKey="stress" stroke="#ef4444" strokeWidth={3} dot={false} name="Stress" className="chart-glow-red" />
-              <Line type="monotone" dataKey="muskelkater" stroke="#f97316" strokeWidth={3} dot={false} name="Muskelkater" className="chart-glow-orange" />
-              <Line type="monotone" dataKey="stimmung" stroke="#a855f7" strokeWidth={3} dot={false} name="Stimmung" className="chart-glow-purple" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-    </div>
-  );
-}
 
 // ── Main Page ──
 export default function FortschrittPage() {
@@ -423,7 +367,6 @@ export default function FortschrittPage() {
             {activeTab === "kraft" && <KraftTab data={data?.kraftDaten || []} />}
             {activeTab === "koerper" && <KoerperTab data={data?.koerperDaten || []} />}
             {activeTab === "volumen" && <VolumenTab data={data?.volumenDaten || []} />}
-            {activeTab === "wellness" && <WellnessTab data={data?.wellnessDaten || []} />}
           </>
         )}
       </main>

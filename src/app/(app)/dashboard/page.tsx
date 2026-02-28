@@ -137,13 +137,6 @@ export default function DashboardPage() {
       bgClass: "gradient-green",
     },
     {
-      title: "Wellness Check-in",
-      description: "Wie fühlst du dich gerade?",
-      icon: "ecg_heart",
-      href: "/wellness",
-      bgClass: "gradient-red",
-    },
-    {
       title: "Coach fragen",
       description: "Bereit für deine Fragen",
       icon: "smart_toy",

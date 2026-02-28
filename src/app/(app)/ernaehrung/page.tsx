@@ -440,7 +440,7 @@ export default function ErnaehrungPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-white">Kreatin</h4>
-                  <p className="text-xs text-slate-500 font-medium">5g täglich</p>
+                  <p className="text-xs text-slate-500 font-medium">0.1g/kg Körpergewicht</p>
                 </div>
               </div>
               <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-black hover:border-primary transition-colors cursor-pointer">

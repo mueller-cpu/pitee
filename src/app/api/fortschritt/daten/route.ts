@@ -93,27 +93,6 @@ export async function GET() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([woche, volumen]) => ({ woche, volumen: Math.round(volumen) }));
 
-    // ── Wellness-Daten: last 30 days ──
-    const dreissigTageZurueck = new Date();
-    dreissigTageZurueck.setDate(dreissigTageZurueck.getDate() - 30);
-
-    const wellnessDaten = await prisma.wellnessLog.findMany({
-      where: {
-        userId: user.id,
-        datum: { gte: dreissigTageZurueck },
-      },
-      orderBy: { datum: "asc" },
-      select: {
-        datum: true,
-        schlafStunden: true,
-        schlafQualitaet: true,
-        energie: true,
-        stress: true,
-        muskelkater: true,
-        stimmung: true,
-      },
-    });
-
     return NextResponse.json({
       kraftDaten,
       koerperDaten: koerperDaten.map((k) => ({
@@ -121,10 +100,6 @@ export async function GET() {
         datum: k.datum.toISOString().split("T")[0],
       })),
       volumenDaten,
-      wellnessDaten: wellnessDaten.map((w) => ({
-        ...w,
-        datum: w.datum.toISOString().split("T")[0],
-      })),
     });
   } catch (error) {
     console.error("Fortschritt data error:", error);
